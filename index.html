@@ -1053,7 +1053,13 @@ input[type=number]{-moz-appearance:textfield}
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+// ===== SUPABASE =====
+const SUPABASE_URL = 'https://kzisuvfgobzhaxgtamyx.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt6aXN1dmZnb2J6aGF4Z3RhbXl4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1NjMyMzAsImV4cCI6MjA5MDEzOTIzMH0.kiVExAuwtM6lr7VW98h7ZeJW8QtTwmNcldvUAUk_U2o';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
 // ===== STATE =====
 let currentUser = null;
 let currentRole = 'particulier';
@@ -1162,7 +1168,7 @@ function selectRole(role) {
   document.getElementById('roleArtisan').className = 'role-card'+(role==='artisan'?' selected':'');
 }
 
-function handleAuth() {
+async function handleAuth() {
   const email = document.getElementById('email').value.trim();
   const pass = document.getElementById('password').value;
   const err = document.getElementById('formError');
@@ -1170,30 +1176,37 @@ function handleAuth() {
   if(!email || !pass) { err.textContent='Veuillez remplir tous les champs.'; err.style.display='block'; return; }
   if(pass.length<6) { err.textContent='Mot de passe trop court (6 caractères minimum).'; err.style.display='block'; return; }
 
-  if(authTab==='register') {
-    const prenom = document.getElementById('prenom').value.trim();
-    const nom = document.getElementById('nom').value.trim();
-    if(!prenom||!nom) { err.textContent='Veuillez renseigner votre prénom et nom.'; err.style.display='block'; return; }
-    currentUser = {email, prenom, nom, role: selectedRole};
-    currentRole = selectedRole;
-  } else {
-    // Demo login
-    currentUser = {email, prenom: 'Hachime', nom: 'Mogni', role: 'particulier'};
-    // Auto-detect role from email hint
-    if(email.includes('artisan')) { currentUser.role='artisan'; }
-    currentRole = currentUser.role;
-  }
+  document.getElementById('authBtn').textContent = 'Chargement…';
+  document.getElementById('authBtn').disabled = true;
 
-  // Init projets
-  if(currentRole==='particulier' && projets.length===0) {
-    projets = [
-      {id:'p'+Date.now(),titre:'Rénovation cuisine 12m²',categorie:'Peinture / Revêtements',localisation:'Champigny-sur-Marne',created_at:new Date(),statut:'ouvert',nb_devis:3},
-    ];
-    conversations = [{id:'c1',otherName:'Marc P.',otherAvatar:'👷‍♂️',projetTitre:'Rénovation cuisine'}];
+  try {
+    if(authTab==='register') {
+      const prenom = document.getElementById('prenom').value.trim();
+      const nom = document.getElementById('nom').value.trim();
+      if(!prenom||!nom) { err.textContent='Veuillez renseigner votre prénom et nom.'; err.style.display='block'; return; }
+      const { data, error } = await sb.auth.signUp({
+        email, password: pass,
+        options: { data: { prenom, nom, role: selectedRole } }
+      });
+      if(error) throw error;
+      currentUser = { ...data.user, prenom, nom, role: selectedRole };
+      currentRole = selectedRole;
+    } else {
+      const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+      if(error) throw error;
+      const { data: profile } = await sb.from('profiles').select('*').eq('id', data.user.id).single();
+      currentUser = { ...data.user, ...profile };
+      currentRole = profile?.role || 'particulier';
+    }
+    updateNavUser();
+    goToDash();
+  } catch(e) {
+    err.textContent = e.message === 'Invalid login credentials' ? 'Email ou mot de passe incorrect' : e.message;
+    err.style.display='block';
+  } finally {
+    document.getElementById('authBtn').textContent = authTab==='login' ? 'Se connecter' : 'Créer mon compte';
+    document.getElementById('authBtn').disabled = false;
   }
-
-  updateNavUser();
-  goToDash();
 }
 
 function updateNavUser() {
@@ -1202,24 +1215,34 @@ function updateNavUser() {
   document.getElementById('navUser').style.display='flex';
 }
 
-function logout() {
-  currentUser=null; currentRole='particulier'; projets=[]; conversations=[];
+async function logout() {
+  await sb.auth.signOut();
+  currentUser=null; currentRole='particulier';
   document.getElementById('navGuest').style.display='flex';
   document.getElementById('navUser').style.display='none';
   showPage('home');
 }
 
-// ===== DASHBOARD PARTICULIER =====
-function renderDashPart() {
+async function renderDashPart() {
   if(!currentUser) return;
-  const name = currentUser.prenom||'';
-  document.getElementById('dashWelcomeName').textContent=name;
-  document.getElementById('dashNavName').textContent=name+' '+currentUser.nom;
-  document.getElementById('statProjets').textContent=projets.length;
-  document.getElementById('statMessages').textContent=conversations.length;
-  document.getElementById('statTermines').textContent=projets.filter(p=>p.statut==='termine').length;
+  document.getElementById('dashWelcomeName').textContent = currentUser.prenom||'';
+  document.getElementById('dashNavName').textContent = (currentUser.prenom||'')+' '+(currentUser.nom||'');
 
-  const list=document.getElementById('projetsList');
+  // Charger vrais projets
+  const { data: projetsData } = await sb.from('projets').select('*').eq('particulier_id', currentUser.id).order('created_at', {ascending: false});
+  const projets = projetsData || [];
+
+  // Charger conversations
+  const { data: convsData } = await sb.from('conversations')
+    .select('*, projets(titre), profiles!conversations_artisan_id_fkey(prenom, nom)')
+    .eq('particulier_id', currentUser.id).order('created_at', {ascending: false}).limit(5);
+  const convs = convsData || [];
+
+  document.getElementById('statProjets').textContent = projets.length;
+  document.getElementById('statMessages').textContent = convs.length;
+  document.getElementById('statTermines').textContent = projets.filter(p=>p.statut==='termine').length;
+
+  const list = document.getElementById('projetsList');
   if(projets.length===0) {
     list.innerHTML=`<div class="empty-state"><div class="empty-icon">📁</div><p class="empty-text">Vous n'avez pas encore de projet</p><button class="btn btn-primary" onclick="showPage('nouveau-projet')">+ Déposer mon premier projet</button></div>`;
   } else {
@@ -1240,32 +1263,46 @@ function renderDashPart() {
       </div>`).join('');
   }
 
-  const convList=document.getElementById('convListPart');
-  if(conversations.length===0) {
+  const convList = document.getElementById('convListPart');
+  if(convs.length===0) {
     convList.innerHTML=`<div class="empty-state" style="padding:32px"><div class="empty-icon">💬</div><p class="empty-text">Aucun message pour l'instant</p></div>`;
   } else {
-    convList.innerHTML=conversations.map(c=>`
+    convList.innerHTML=convs.map(c=>`
       <div class="conv-item" onclick="showPage('messagerie')">
-        <div class="conv-avatar">${c.otherAvatar}</div>
-        <div><div class="conv-name">${c.otherName}</div><div class="conv-sub">${c.projetTitre}</div></div>
+        <div class="conv-avatar">👷</div>
+        <div><div class="conv-name">${c.profiles?.prenom||''} ${c.profiles?.nom||''}</div><div class="conv-sub">${c.projets?.titre||''}</div></div>
       </div>`).join('');
   }
 }
 
-// ===== DASHBOARD ARTISAN =====
-function renderDashArt() {
+async function renderDashArt() {
   if(!currentUser) return;
-  document.getElementById('artisanWelcomeName').textContent=currentUser.prenom||'';
-  document.getElementById('statChantiers').textContent=DEMO_PROJETS_ARTISAN.length;
-  document.getElementById('statConvsArt').textContent=DEMO_CONVS.length;
+  document.getElementById('artisanWelcomeName').textContent = currentUser.prenom||'';
+
+  const { data: projetsData } = await sb.from('projets').select('*').eq('statut','ouvert').order('created_at',{ascending:false}).limit(20);
+  const projets = projetsData || [];
+  document.getElementById('statChantiers').textContent = projets.length;
+
+  const { data: convsData } = await sb.from('conversations')
+    .select('*, projets(titre), profiles!conversations_particulier_id_fkey(prenom, nom)')
+    .eq('artisan_id', currentUser.id).order('created_at',{ascending:false}).limit(5);
+  const convs = convsData || [];
+  document.getElementById('statConvsArt').textContent = convs.length;
+
+  // Rendre chantiers
+  window._chantiers = projets;
   renderChantiers('');
 
-  const convList=document.getElementById('convListArt');
-  convList.innerHTML=DEMO_CONVS.map(c=>`
-    <div class="conv-item" onclick="showPage('messagerie');openConv('${c.id}')">
-      <div class="conv-avatar">${c.otherAvatar}</div>
-      <div><div class="conv-name">${c.otherName}</div><div class="conv-sub">${c.projetTitre}</div></div>
-    </div>`).join('');
+  const convList = document.getElementById('convListArt');
+  if(convs.length===0) {
+    convList.innerHTML=`<div class="empty-state" style="padding:32px"><div class="empty-icon">💬</div><p class="empty-text">Contactez des particuliers pour démarrer</p></div>`;
+  } else {
+    convList.innerHTML=convs.map(c=>`
+      <div class="conv-item" onclick="showPage('messagerie')">
+        <div class="conv-avatar">👤</div>
+        <div><div class="conv-name">${c.profiles?.prenom||''} ${c.profiles?.nom||''}</div><div class="conv-sub">${c.projets?.titre||''}</div></div>
+      </div>`).join('');
+  }
 }
 
 function filterChantiers() {
@@ -1274,7 +1311,8 @@ function filterChantiers() {
 }
 
 function renderChantiers(q) {
-  const filtered = DEMO_PROJETS_ARTISAN.filter(p=>!q||p.titre.toLowerCase().includes(q)||p.categorie.toLowerCase().includes(q));
+  const all = window._chantiers || DEMO_PROJETS_ARTISAN;
+  const filtered = all.filter(p=>!q||p.titre.toLowerCase().includes(q)||p.categorie.toLowerCase().includes(q));
   const list=document.getElementById('chantiersList');
   list.innerHTML=filtered.map(p=>{
     const urgClass=p.urgence==='urgent'?'badge-red':'badge-gray';
@@ -1426,24 +1464,31 @@ function selectUrgence(u) {
     document.getElementById('urg-'+k).classList.toggle('selected',k===u);
   });
 }
-function submitProjet() {
-  const newProj={
-    id:'p'+Date.now(),
-    titre:document.getElementById('projTitre').value.trim(),
-    categorie:selectedCat,
-    description:document.getElementById('projDesc').value.trim(),
-    localisation:document.getElementById('projVille').value.trim(),
-    code_postal:document.getElementById('projCP').value.trim(),
-    budget_min:document.getElementById('projBudgetMin').value||null,
-    budget_max:document.getElementById('projBudgetMax').value||null,
-    urgence:selectedUrgence,
-    statut:'ouvert',nb_devis:0,
-    created_at:new Date()
-  };
-  projets.unshift(newProj);
-  for(let i=1;i<=3;i++) document.getElementById('projStep'+i).style.display='none';
-  document.getElementById('projSuccess').style.display='block';
-  document.getElementById('progressSteps').style.display='none';
+async function submitProjet() {
+  if(!currentUser) { showPage('auth'); return; }
+  const btn = document.getElementById('btnStep3');
+  btn.textContent = 'Publication…'; btn.disabled = true;
+  try {
+    const { error } = await sb.from('projets').insert({
+      particulier_id: currentUser.id,
+      titre: document.getElementById('projTitre').value.trim(),
+      description: document.getElementById('projDesc').value.trim(),
+      categorie: selectedCat,
+      localisation: document.getElementById('projVille').value.trim(),
+      code_postal: document.getElementById('projCP').value.trim(),
+      budget_min: document.getElementById('projBudgetMin').value || null,
+      budget_max: document.getElementById('projBudgetMax').value || null,
+      urgence: selectedUrgence,
+    });
+    if(error) throw error;
+    for(let i=1;i<=3;i++) document.getElementById('projStep'+i).style.display='none';
+    document.getElementById('projSuccess').style.display='block';
+    document.getElementById('progressSteps').style.display='none';
+  } catch(e) {
+    alert('Erreur : ' + e.message);
+  } finally {
+    btn.textContent = 'Publier mon projet'; btn.disabled = false;
+  }
 }
 function resetProjet() {
   projStep=1; selectedCat=''; selectedUrgence='flexible';
@@ -1536,6 +1581,23 @@ function toggleFaq(el) {
 
 // Init
 setupHomeScroll();
+
+// Vérifier session existante
+sb.auth.getSession().then(async ({ data: { session } }) => {
+  if(session) {
+    const { data: profile } = await sb.from('profiles').select('*').eq('id', session.user.id).single();
+    currentUser = { ...session.user, ...profile };
+    currentRole = profile?.role || 'particulier';
+    updateNavUser();
+  }
+});
+
+// Écouter changements auth
+sb.auth.onAuthStateChange(async (event, session) => {
+  if(event === 'SIGNED_OUT') {
+    currentUser = null; currentRole = 'particulier';
+  }
+});
 </script>
 </body>
 </html>
