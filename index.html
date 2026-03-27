@@ -1451,7 +1451,7 @@ function selectCat(cat) {
 function checkStep2() {
   const t=document.getElementById('projTitre').value.trim();
   const d=document.getElementById('projDesc').value.trim();
-  document.getElementById('btnStep2').disabled=!(t&&d.length>=20);
+  document.getElementById('btnStep2').disabled=!(t&&d.length>=5);
 }
 function checkStep3() {
   const v=document.getElementById('projVille').value.trim();
