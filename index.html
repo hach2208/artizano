@@ -358,6 +358,14 @@ footer{background:#0f172a;color:var(--gray-400);padding:60px 24px 32px}
 .full-btn:disabled{opacity:.5;cursor:not-allowed}
 textarea{resize:vertical}
 input[type=number]{-moz-appearance:textfield}
+
+/* TOAST */
+#toast-container{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:10px;pointer-events:none}
+.toast{background:#1e293b;color:#fff;padding:14px 20px;border-radius:14px;font-size:14px;font-family:'DM Sans',sans-serif;box-shadow:0 8px 32px rgba(0,0,0,.2);display:flex;align-items:center;gap:10px;pointer-events:all;animation:toastIn .3s ease;max-width:340px}
+.toast.success{border-left:4px solid var(--green)}
+.toast.error{border-left:4px solid var(--red)}
+.toast.info{border-left:4px solid var(--blue)}
+@keyframes toastIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 @media(max-width:768px){
   .auth-page{grid-template-columns:1fr}
   .auth-left{display:none}
@@ -1053,6 +1061,7 @@ input[type=number]{-moz-appearance:textfield}
   </div>
 </div>
 
+<div id="toast-container"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 // ===== SUPABASE =====
@@ -1098,6 +1107,17 @@ const DEMO_MSGS = {
   ],
 };
 
+// ===== TOAST =====
+function toast(msg, type='info') {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  const icons = {success:'✅', error:'❌', info:'ℹ️'};
+  t.innerHTML = `<span>${icons[type]||''}</span><span>${msg}</span>`;
+  c.appendChild(t);
+  setTimeout(() => { t.style.opacity='0'; t.style.transition='opacity .3s'; setTimeout(()=>t.remove(), 300); }, 3500);
+}
+
 // ===== NAVIGATION =====
 function showPage(page) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -1116,6 +1136,10 @@ function updateNav(page) {
   if(!nav) return;
   if(page==='home') {
     nav.className = 'transparent';
+    document.getElementById('navGuest').style.display = currentUser ? 'none' : 'flex';
+    document.getElementById('navUser').style.display = currentUser ? 'flex' : 'none';
+  } else {
+    nav.className = 'solid';
     document.getElementById('navGuest').style.display = currentUser ? 'none' : 'flex';
     document.getElementById('navUser').style.display = currentUser ? 'flex' : 'none';
   }
@@ -1311,9 +1335,13 @@ function filterChantiers() {
 }
 
 function renderChantiers(q) {
-  const all = window._chantiers || DEMO_PROJETS_ARTISAN;
+  const all = window._chantiers || [];
   const filtered = all.filter(p=>!q||p.titre.toLowerCase().includes(q)||p.categorie.toLowerCase().includes(q));
   const list=document.getElementById('chantiersList');
+  if(filtered.length===0) {
+    list.innerHTML=`<div class="empty-state"><div class="empty-icon">🏗️</div><p class="empty-text">${q?'Aucun résultat pour "'+q+'"':'Aucun projet disponible pour le moment'}</p></div>`;
+    return;
+  }
   list.innerHTML=filtered.map(p=>{
     const urgClass=p.urgence==='urgent'?'badge-red':'badge-gray';
     const urgLabel=p.urgence==='urgent'?'🔴 Urgent':p.urgence==='dans_1_mois'?'Ce mois-ci':'Flexible';
@@ -1336,56 +1364,94 @@ function renderChantiers(q) {
   }).join('');
 }
 
-function contactParticulier(projId) {
-  const proj = DEMO_PROJETS_ARTISAN.find(p=>p.id===projId);
+async function contactParticulier(projId) {
+  if(!currentUser) { showPage('auth'); return; }
+  const proj = (window._chantiers||[]).find(p=>p.id===projId);
   if(!proj) return;
-  // Add to convs if not there
-  const exists = DEMO_CONVS.find(c=>c.projetTitre===proj.titre);
-  if(!exists) {
-    DEMO_CONVS.push({id:'c'+Date.now(),otherName:'Client',otherAvatar:'👤',projetTitre:proj.titre});
+  // Vérifier si conversation existe déjà
+  const { data: existing } = await sb.from('conversations')
+    .select('id')
+    .eq('artisan_id', currentUser.id)
+    .eq('projet_id', projId)
+    .maybeSingle();
+  if(!existing) {
+    const { error } = await sb.from('conversations').insert({
+      artisan_id: currentUser.id,
+      particulier_id: proj.particulier_id,
+      projet_id: projId,
+    });
+    if(error) { toast('Erreur lors de la création de la conversation', 'error'); return; }
+    toast('Conversation démarrée !', 'success');
   }
   showPage('messagerie');
 }
 
 // ===== MESSAGERIE =====
-function renderMessagerie() {
-  const allConvs = currentRole==='artisan' ? DEMO_CONVS : conversations;
-  const list=document.getElementById('msgConvList');
-  list.innerHTML=allConvs.map(c=>`
-    <div class="msg-conv-item ${activeConvId===c.id?'active':''}" onclick="openConv('${c.id}')">
-      <div class="msg-conv-avatar">${c.otherAvatar||'👤'}</div>
-      <div><div class="msg-conv-name">${c.otherName}</div><div class="msg-conv-sub">${c.projetTitre}</div></div>
-    </div>`).join('');
+let _convs = []; // cache conversations
+
+async function renderMessagerie() {
+  if(!currentUser) return;
+  const list = document.getElementById('msgConvList');
+  list.innerHTML = '<div style="padding:20px;color:var(--gray-400);font-size:13px">Chargement…</div>';
+
+  let query;
+  if(currentRole === 'artisan') {
+    query = sb.from('conversations')
+      .select('*, projets(titre), profiles!conversations_particulier_id_fkey(prenom, nom)')
+      .eq('artisan_id', currentUser.id)
+      .order('created_at', {ascending: false});
+  } else {
+    query = sb.from('conversations')
+      .select('*, projets(titre), profiles!conversations_artisan_id_fkey(prenom, nom)')
+      .eq('particulier_id', currentUser.id)
+      .order('created_at', {ascending: false});
+  }
+
+  const { data: convsData } = await query;
+  _convs = convsData || [];
+
+  if(_convs.length === 0) {
+    list.innerHTML = '<div style="padding:32px;text-align:center;color:var(--gray-400);font-size:13px">Aucune conversation</div>';
+    return;
+  }
+
+  list.innerHTML = _convs.map(c => {
+    const profile = c.profiles;
+    const name = profile ? (profile.prenom + ' ' + profile.nom).trim() : 'Utilisateur';
+    const avatar = currentRole === 'artisan' ? '👤' : '👷';
+    const titre = c.projets?.titre || '';
+    return `<div class="msg-conv-item ${activeConvId===c.id?'active':''}" onclick="openConv('${c.id}')">
+      <div class="msg-conv-avatar">${avatar}</div>
+      <div><div class="msg-conv-name">${name}</div><div class="msg-conv-sub">${titre}</div></div>
+    </div>`;
+  }).join('');
 
   if(activeConvId) openConv(activeConvId);
 }
 
-function openConv(convId) {
-  activeConvId=convId;
-  const allConvs = currentRole==='artisan' ? DEMO_CONVS : [{id:'c1',otherName:'Marc P.',otherAvatar:'👷‍♂️',projetTitre:'Rénovation cuisine'},...DEMO_CONVS];
-  const conv=allConvs.find(c=>c.id===convId);
+async function openConv(convId) {
+  activeConvId = convId;
+  const conv = _convs.find(c => c.id === convId);
   if(!conv) return;
 
-  // Update sidebar
-  document.querySelectorAll('.msg-conv-item').forEach(el=>el.classList.remove('active'));
-  const msgs = DEMO_MSGS[convId]||[];
-  const main=document.getElementById('msgMainContent');
-  main.className='';
-  main.style.cssText='flex:1;display:flex;flex-direction:column;overflow:hidden';
-  main.innerHTML=`
+  document.querySelectorAll('.msg-conv-item').forEach(el => el.classList.remove('active'));
+  const activeEl = document.querySelector(`.msg-conv-item[onclick="openConv('${convId}')"]`);
+  if(activeEl) activeEl.classList.add('active');
+
+  const profile = conv.profiles;
+  const otherName = profile ? (profile.prenom + ' ' + profile.nom).trim() : 'Utilisateur';
+  const otherAvatar = currentRole === 'artisan' ? '👤' : '👷';
+  const projetTitre = conv.projets?.titre || '';
+
+  const main = document.getElementById('msgMainContent');
+  main.className = '';
+  main.style.cssText = 'flex:1;display:flex;flex-direction:column;overflow:hidden';
+  main.innerHTML = `
     <div class="msg-main-header">
-      <div class="msg-conv-avatar">${conv.otherAvatar||'👤'}</div>
-      <div><div class="msg-conv-name">${conv.otherName}</div><div style="font-size:12px;color:var(--gray-400)">${conv.projetTitre}</div></div>
+      <div class="msg-conv-avatar">${otherAvatar}</div>
+      <div><div class="msg-conv-name">${otherName}</div><div style="font-size:12px;color:var(--gray-400)">${projetTitre}</div></div>
     </div>
-    <div class="msg-messages" id="msgBubbles">
-      ${msgs.map(m=>`
-        <div>
-          <div class="msg-bubble-wrap ${m.sender==='me'?'mine':''}">
-            <div class="msg-bubble ${m.sender==='me'?'mine':'other'}">${m.contenu}</div>
-          </div>
-          <div class="msg-time" style="${m.sender==='me'?'text-align:right':'text-align:left'}">${m.time}</div>
-        </div>`).join('')}
-    </div>
+    <div class="msg-messages" id="msgBubbles"><div style="text-align:center;color:var(--gray-400);font-size:13px;padding:20px">Chargement…</div></div>
     <div class="msg-input-area">
       <input class="msg-input" placeholder="Écrivez votre message…" id="msgInputField" onkeydown="if(event.key==='Enter')sendMsg('${convId}')">
       <button class="msg-send-btn" onclick="sendMsg('${convId}')">
@@ -1393,35 +1459,60 @@ function openConv(convId) {
       </button>
     </div>`;
 
-  const bubbles=document.getElementById('msgBubbles');
-  if(bubbles) bubbles.scrollTop=bubbles.scrollHeight;
+  // Charger messages depuis Supabase
+  const { data: msgs } = await sb.from('messages')
+    .select('*')
+    .eq('conversation_id', convId)
+    .order('created_at', {ascending: true});
+
+  const bubbles = document.getElementById('msgBubbles');
+  if(!bubbles) return;
+
+  if(!msgs || msgs.length === 0) {
+    bubbles.innerHTML = '<div style="text-align:center;color:var(--gray-400);font-size:13px;padding:40px">Démarrez la conversation !</div>';
+  } else {
+    bubbles.innerHTML = msgs.map(m => {
+      const isMine = m.sender_id === currentUser.id;
+      const time = new Date(m.created_at);
+      const timeStr = `${time.getHours()}h${String(time.getMinutes()).padStart(2,'0')}`;
+      return `<div>
+        <div class="msg-bubble-wrap ${isMine?'mine':''}">
+          <div class="msg-bubble ${isMine?'mine':'other'}">${m.contenu}</div>
+        </div>
+        <div class="msg-time" style="${isMine?'text-align:right':'text-align:left'}">${timeStr}</div>
+      </div>`;
+    }).join('');
+    bubbles.scrollTop = bubbles.scrollHeight;
+  }
 }
 
-function sendMsg(convId) {
-  const input=document.getElementById('msgInputField');
-  if(!input||!input.value.trim()) return;
-  const txt=input.value.trim();
-  input.value='';
-  if(!DEMO_MSGS[convId]) DEMO_MSGS[convId]=[];
-  const now=new Date();
-  DEMO_MSGS[convId].push({id:'m'+Date.now(),sender:'me',contenu:txt,time:`${now.getHours()}h${String(now.getMinutes()).padStart(2,'0')}`});
-  const bubbles=document.getElementById('msgBubbles');
-  const div=document.createElement('div');
-  div.innerHTML=`<div class="msg-bubble-wrap mine"><div class="msg-bubble mine">${txt}</div></div><div class="msg-time" style="text-align:right">${now.getHours()}h${String(now.getMinutes()).padStart(2,'0')}</div>`;
-  bubbles.appendChild(div);
-  bubbles.scrollTop=bubbles.scrollHeight;
+async function sendMsg(convId) {
+  const input = document.getElementById('msgInputField');
+  if(!input || !input.value.trim()) return;
+  const txt = input.value.trim();
+  input.value = '';
 
-  // Simulate reply
-  setTimeout(()=>{
-    const replies=['Bien reçu, merci !','Je reviens vers vous rapidement.','Très bien, je note.','D\'accord, je vous envoie un devis demain.'];
-    const reply=replies[Math.floor(Math.random()*replies.length)];
-    const rt=new Date();
-    DEMO_MSGS[convId].push({id:'m'+Date.now(),sender:'other',contenu:reply,time:`${rt.getHours()}h${String(rt.getMinutes()).padStart(2,'0')}`});
-    const d2=document.createElement('div');
-    d2.innerHTML=`<div class="msg-bubble-wrap"><div class="msg-bubble other">${reply}</div></div><div class="msg-time">${rt.getHours()}h${String(rt.getMinutes()).padStart(2,'0')}</div>`;
-    bubbles.appendChild(d2);
-    bubbles.scrollTop=bubbles.scrollHeight;
-  },1200);
+  const now = new Date();
+  const timeStr = `${now.getHours()}h${String(now.getMinutes()).padStart(2,'0')}`;
+
+  // Afficher immédiatement (optimistic UI)
+  const bubbles = document.getElementById('msgBubbles');
+  const div = document.createElement('div');
+  div.innerHTML = `<div class="msg-bubble-wrap mine"><div class="msg-bubble mine">${txt}</div></div><div class="msg-time" style="text-align:right">${timeStr}</div>`;
+  bubbles.appendChild(div);
+  bubbles.scrollTop = bubbles.scrollHeight;
+
+  // Sauvegarder dans Supabase
+  const { error } = await sb.from('messages').insert({
+    conversation_id: convId,
+    sender_id: currentUser.id,
+    contenu: txt,
+  });
+  if(error) {
+    toast('Erreur envoi message : ' + error.message, 'error');
+    div.remove();
+    input.value = txt;
+  }
 }
 
 // ===== NOUVEAU PROJET =====
@@ -1485,7 +1576,7 @@ async function submitProjet() {
     document.getElementById('projSuccess').style.display='block';
     document.getElementById('progressSteps').style.display='none';
   } catch(e) {
-    alert('Erreur : ' + e.message);
+    toast('Erreur : ' + e.message, 'error');
   } finally {
     btn.textContent = 'Publier mon projet'; btn.disabled = false;
   }
@@ -1507,12 +1598,33 @@ function resetProjet() {
 }
 
 // ===== PROFIL ARTISAN =====
-function loadProfilArtisan() {
+async function loadProfilArtisan() {
   if(!currentUser) return;
-  document.getElementById('profPrenom').value=currentUser.prenom||'';
-  document.getElementById('profNom').value=currentUser.nom||'';
+  // Charger profil complet depuis Supabase
+  const { data: profile } = await sb.from('profiles').select('*').eq('id', currentUser.id).single();
+  if(profile) {
+    document.getElementById('profPrenom').value = profile.prenom||'';
+    document.getElementById('profNom').value = profile.nom||'';
+    document.getElementById('profTel').value = profile.telephone||'';
+    document.getElementById('profVille').value = profile.ville||'';
+    document.getElementById('profDesc').value = profile.description||'';
+    document.getElementById('profExp').value = profile.experience||5;
+    document.getElementById('profRayon').value = profile.rayon||30;
+    document.getElementById('profTarif').value = profile.tarif_horaire||'';
+    document.getElementById('profSiret').value = profile.siret||'';
+    // Spécialités
+    const specs = profile.specialites || [];
+    document.querySelectorAll('#specSelector .spec-tag').forEach(el => {
+      if(specs.includes(el.textContent)) el.classList.add('selected');
+    });
+    updateDisplaySpecs();
+  } else {
+    document.getElementById('profPrenom').value = currentUser.prenom||'';
+    document.getElementById('profNom').value = currentUser.nom||'';
+  }
   updateProfilPreview();
 }
+
 function updateProfilPreview() {
   const p=document.getElementById('profPrenom').value;
   const n=document.getElementById('profNom').value;
@@ -1528,11 +1640,38 @@ function updateDisplaySpecs() {
   const selected=[...document.querySelectorAll('#specSelector .spec-tag.selected')].map(el=>el.textContent);
   document.getElementById('profilDisplaySpecs').innerHTML=selected.map(s=>`<span class="spec-tag">${s}</span>`).join('');
 }
-function saveProfil() {
-  const btn=document.querySelector('.profil-page + * button, nav button[onclick="saveProfil()"]');
-  alert('✅ Profil enregistré avec succès !');
-  currentUser.prenom=document.getElementById('profPrenom').value;
-  currentUser.nom=document.getElementById('profNom').value;
+
+async function saveProfil() {
+  if(!currentUser) return;
+  const btn = document.querySelector('button[onclick="saveProfil()"]');
+  if(btn) { btn.textContent='⏳ Enregistrement…'; btn.disabled=true; }
+  const specialites = [...document.querySelectorAll('#specSelector .spec-tag.selected')].map(el=>el.textContent);
+  const profileData = {
+    id: currentUser.id,
+    prenom: document.getElementById('profPrenom').value.trim(),
+    nom: document.getElementById('profNom').value.trim(),
+    telephone: document.getElementById('profTel').value.trim(),
+    ville: document.getElementById('profVille').value.trim(),
+    description: document.getElementById('profDesc').value.trim(),
+    experience: parseInt(document.getElementById('profExp').value)||0,
+    rayon: parseInt(document.getElementById('profRayon').value)||30,
+    tarif_horaire: parseFloat(document.getElementById('profTarif').value)||null,
+    siret: document.getElementById('profSiret').value.trim(),
+    specialites,
+    role: 'artisan',
+    updated_at: new Date().toISOString(),
+  };
+  try {
+    const { error } = await sb.from('profiles').upsert(profileData);
+    if(error) throw error;
+    currentUser.prenom = profileData.prenom;
+    currentUser.nom = profileData.nom;
+    toast('Profil enregistré avec succès !', 'success');
+  } catch(e) {
+    toast('Erreur : ' + e.message, 'error');
+  } finally {
+    if(btn) { btn.textContent='💾 Enregistrer'; btn.disabled=false; }
+  }
 }
 
 // ===== UTILS =====
