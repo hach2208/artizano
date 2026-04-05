@@ -366,6 +366,27 @@ input[type=number]{-moz-appearance:textfield}
 .toast.error{border-left:4px solid var(--red)}
 .toast.info{border-left:4px solid var(--blue)}
 @keyframes toastIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+/* HAMBURGER */
+.hamburger{display:none;background:none;border:none;cursor:pointer;padding:4px;flex-direction:column;gap:5px}
+.hamburger span{display:block;width:24px;height:2px;background:var(--gray-700);transition:all .2s}
+nav.transparent .hamburger span{background:#fff}
+@media(max-width:768px){
+  .hamburger{display:flex}
+  .nav-links{position:fixed;top:64px;left:0;right:0;background:#fff;flex-direction:column;padding:20px 24px;gap:16px;box-shadow:0 8px 32px rgba(0,0,0,.12);transform:translateY(-120%);transition:transform .3s;z-index:99}
+  .nav-links.open{transform:translateY(0)}
+  .nav-links .nav-link{color:var(--gray-700)!important}
+  #navGuest,#navUser{flex-direction:column;gap:8px}
+  .tarifs-cards-wrap{grid-template-columns:1fr!important}
+  .search-bar{flex-direction:column}
+  .search-divider{display:none}
+  .compare-header,.compare-row{grid-template-columns:2fr 1fr 1fr 1fr!important;font-size:12px}
+}
+
+/* LOADING SPINNER */
+.loading-wrap{display:flex;align-items:center;justify-content:center;padding:40px}
+.spinner{width:32px;height:32px;border:3px solid var(--gray-200);border-top-color:var(--amber);border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 @media(max-width:768px){
   .auth-page{grid-template-columns:1fr}
   .auth-left{display:none}
@@ -389,10 +410,11 @@ input[type=number]{-moz-appearance:textfield}
     <div class="logo-icon">🔨</div>
     <span class="logo-text">Artizano</span>
   </div>
+  <button class="hamburger" onclick="toggleMenu()"><span></span><span></span><span></span></button>
   <div class="nav-links" id="navLinks">
-    <a class="nav-link" onclick="showPage('tarifs')">Tarifs</a>
-    <a class="nav-link" onclick="scrollTo(0,600)">Comment ça marche</a>
-    <a class="nav-link" onclick="showPage('home')">Trouver un artisan</a>
+    <a class="nav-link" onclick="showPage('tarifs');closeMenu()">Tarifs</a>
+    <a class="nav-link" onclick="scrollTo(0,600);closeMenu()">Comment ça marche</a>
+    <a class="nav-link" onclick="heroSearch();closeMenu()">Trouver un artisan</a>
     <div id="navGuest">
       <a class="nav-link" onclick="showPage('auth')" style="margin-right:12px">Connexion</a>
       <button class="btn btn-primary" onclick="showPage('auth')">Déposer un projet</button>
@@ -426,7 +448,7 @@ input[type=number]{-moz-appearance:textfield}
           <span style="font-size:18px">📍</span>
           <input type="text" placeholder="Votre ville ou code postal" id="heroCity">
         </div>
-        <button class="btn btn-primary" onclick="showPage('auth')" style="white-space:nowrap">Trouver un artisan →</button>
+        <button class="btn btn-primary" onclick="heroSearch()" style="white-space:nowrap">Trouver un artisan →</button>
       </div>
       <div class="hero-social">
         <div class="avatar-stack">
@@ -459,12 +481,12 @@ input[type=number]{-moz-appearance:textfield}
   <section class="section" style="background:var(--gray-50)">
     <div class="section-center"><h2>Tous types de travaux</h2><p class="section-sub">Quel que soit votre projet, nous avons les artisans qu'il vous faut</p></div>
     <div class="cats-grid">
-      <div class="cat-card" onclick="showPage('auth')"><div class="cat-icon" style="background:#fff7ed;color:#ea580c">🧱</div><div class="cat-label">Maçonnerie</div></div>
-      <div class="cat-card" onclick="showPage('auth')"><div class="cat-icon" style="background:#eff6ff;color:#2563eb">🖌️</div><div class="cat-label">Peinture</div></div>
-      <div class="cat-card" onclick="showPage('auth')"><div class="cat-icon" style="background:#ecfeff;color:#0e7490">🔧</div><div class="cat-label">Plomberie</div></div>
-      <div class="cat-card" onclick="showPage('auth')"><div class="cat-icon" style="background:#fefce8;color:#ca8a04">⚡</div><div class="cat-label">Électricité</div></div>
-      <div class="cat-card" onclick="showPage('auth')"><div class="cat-icon" style="background:#f0fdf4;color:#16a34a">🪟</div><div class="cat-label">Menuiserie</div></div>
-      <div class="cat-card" onclick="showPage('auth')"><div class="cat-icon" style="background:#fdf4ff;color:#9333ea">🏠</div><div class="cat-label">Toiture</div></div>
+      <div class="cat-card" onclick="searchByCat('Maçonnerie')"><div class="cat-icon" style="background:#fff7ed;color:#ea580c">🧱</div><div class="cat-label">Maçonnerie</div></div>
+      <div class="cat-card" onclick="searchByCat('Peinture')"><div class="cat-icon" style="background:#eff6ff;color:#2563eb">🖌️</div><div class="cat-label">Peinture</div></div>
+      <div class="cat-card" onclick="searchByCat('Plomberie')"><div class="cat-icon" style="background:#ecfeff;color:#0e7490">🔧</div><div class="cat-label">Plomberie</div></div>
+      <div class="cat-card" onclick="searchByCat('Électricité')"><div class="cat-icon" style="background:#fefce8;color:#ca8a04">⚡</div><div class="cat-label">Électricité</div></div>
+      <div class="cat-card" onclick="searchByCat('Menuiserie')"><div class="cat-icon" style="background:#f0fdf4;color:#16a34a">🪟</div><div class="cat-label">Menuiserie</div></div>
+      <div class="cat-card" onclick="searchByCat('Toiture')"><div class="cat-icon" style="background:#fdf4ff;color:#9333ea">🏠</div><div class="cat-label">Toiture</div></div>
     </div>
   </section>
 
@@ -543,7 +565,7 @@ input[type=number]{-moz-appearance:textfield}
         </div>
         <div class="footer-col"><h4>Particuliers</h4><a onclick="showPage('auth')">Déposer un projet</a><a onclick="showPage('home')">Trouver un artisan</a></div>
         <div class="footer-col"><h4>Artisans</h4><a onclick="showPageAuth('artisan')">Devenir partenaire</a><a onclick="showPage('tarifs')">Tarifs</a></div>
-        <div class="footer-col"><h4>Légal</h4><a>Mentions légales</a><a>CGU</a><a>Confidentialité</a></div>
+        <div class="footer-col"><h4>Légal</h4><a href="privacy.html">Mentions légales</a><a href="privacy.html">CGU</a><a href="privacy.html">Confidentialité</a></div>
       </div>
       <div class="footer-bottom">© 2025 Artizano. Tous droits réservés.</div>
     </div>
@@ -874,7 +896,7 @@ input[type=number]{-moz-appearance:textfield}
             <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:18px;color:var(--gray-900);margin-bottom:6px">Passez Pro</div>
             <p style="font-size:13px;color:var(--gray-600);margin-bottom:12px">Contactez un nombre illimité de clients et boostez votre visibilité.</p>
             <div class="pro-price">29 € <span>/mois</span></div>
-            <button class="full-btn amber" style="margin-top:14px">S'abonner</button>
+            <button class="full-btn amber" style="margin-top:14px" onclick="showPage('tarifs')">Voir les offres →</button>
           </div>
         </div>
       </div>
@@ -1076,36 +1098,10 @@ let authMode = 'login';
 let selectedRole = 'particulier';
 let projets = [];
 let conversations = [];
-let messages = {};
 let activeConvId = null;
 let selectedCat = '';
 let selectedUrgence = 'flexible';
-
-// Demo data
-const DEMO_PROJETS_ARTISAN = [
-  {id:'p1',titre:'Rénovation complète salle de bain',categorie:'Plomberie / Sanitaire',description:'Salle de bain 6m² à rénover entièrement : douche italienne, double vasque, WC suspendu. Dépose de l\'ancien carrelage incluse.',localisation:'Paris 15ème',code_postal:'75015',budget_min:4000,budget_max:7000,urgence:'dans_1_mois',created_at:new Date(Date.now()-2*86400000)},
-  {id:'p2',titre:'Peinture appartement 3 pièces',categorie:'Peinture / Revêtements',description:'Appartement 65m², 3 pièces à repeindre intégralement. Murs et plafonds. Peinture blanche mate souhaitée.',localisation:'Boulogne-Billancourt',code_postal:'92100',budget_min:1500,budget_max:2500,urgence:'flexible',created_at:new Date(Date.now()-1*86400000)},
-  {id:'p3',titre:'Installation tableau électrique',categorie:'Électricité',description:'Remplacement tableau électrique vétuste, mise aux normes. Appartement 80m², 4 pièces.',localisation:'Vincennes',code_postal:'94300',budget_min:800,budget_max:1500,urgence:'urgent',created_at:new Date(Date.now()-3600000)},
-  {id:'p4',titre:'Pose parquet chêne 40m²',categorie:'Carrelage / Sol',description:'Salon/séjour 40m², pose parquet chêne massif flottant. Dépose moquette existante. Plinthes à refaire.',localisation:'Saint-Maur-des-Fossés',code_postal:'94100',budget_min:2000,budget_max:3500,urgence:'dans_1_mois',created_at:new Date(Date.now()-5*86400000)},
-  {id:'p5',titre:'Ravalement façade maison',categorie:'Maçonnerie / Gros œuvre',description:'Maison individuelle 120m², façade à ravaler. Crépi projeté. Peinture fenêtres et volets incluse.',localisation:'Créteil',code_postal:'94000',budget_min:5000,budget_max:10000,urgence:'flexible',created_at:new Date(Date.now()-7*86400000)},
-];
-
-const DEMO_CONVS = [
-  {id:'c1',otherName:'Jean-Pierre M.',otherAvatar:'👷‍♂️',projetTitre:'Rénovation salle de bain'},
-  {id:'c2',otherName:'Sophie L.',otherAvatar:'👩',projetTitre:'Peinture appartement'},
-];
-
-const DEMO_MSGS = {
-  'c1':[
-    {id:'m1',sender:'other',contenu:'Bonjour, je suis intéressé par votre projet de rénovation salle de bain. J\'ai réalisé plus de 50 projets similaires.',time:'10h30'},
-    {id:'m2',sender:'me',contenu:'Bonjour ! Oui, pouvez-vous me donner plus d\'infos sur vos délais et votre tarif ?',time:'10h45'},
-    {id:'m3',sender:'other',contenu:'Bien sûr ! Je suis disponible à partir de la semaine prochaine. Mon tarif pour votre projet serait entre 4500€ et 5500€ selon les matériaux choisis.',time:'11h02'},
-  ],
-  'c2':[
-    {id:'m1',sender:'other',contenu:'Bonjour, votre projet de peinture m\'intéresse. Quelle est la hauteur sous plafond ?',time:'14h15'},
-    {id:'m2',sender:'me',contenu:'Bonjour ! 2m50 standard. Est-ce que vous faites aussi les plafonds ?',time:'14h30'},
-  ],
-};
+let _realtimeSub = null; // Supabase Realtime subscription
 
 // ===== TOAST =====
 function toast(msg, type='info') {
@@ -1118,8 +1114,59 @@ function toast(msg, type='info') {
   setTimeout(() => { t.style.opacity='0'; t.style.transition='opacity .3s'; setTimeout(()=>t.remove(), 300); }, 3500);
 }
 
+// ===== HERO SEARCH =====
+function heroSearch() {
+  if(!currentUser) {
+    showPage('auth');
+    switchTab('register');
+    selectRole('particulier');
+    return;
+  }
+  if(currentRole === 'particulier') {
+    showPage('nouveau-projet');
+  } else {
+    showPage('dash-artisan');
+    setTimeout(()=>{
+      const q = document.getElementById('heroSearch')?.value?.trim() || '';
+      const city = document.getElementById('heroCity')?.value?.trim() || '';
+      if(q || city) {
+        const search = document.getElementById('chantierSearch');
+        if(search) { search.value = q || city; filterChantiers(); }
+      }
+    }, 300);
+  }
+}
+
+function searchByCat(cat) {
+  if(!currentUser) {
+    showPage('auth');
+    switchTab('register');
+    selectRole('particulier');
+    return;
+  }
+  if(currentRole === 'particulier') {
+    showPage('nouveau-projet');
+    selectCat(cat);
+  } else {
+    showPage('dash-artisan');
+    setTimeout(()=>{
+      const search = document.getElementById('chantierSearch');
+      if(search) { search.value = cat; filterChantiers(); }
+    }, 300);
+  }
+}
+
+// ===== HAMBURGER MENU =====
+function toggleMenu() {
+  document.getElementById('navLinks').classList.toggle('open');
+}
+function closeMenu() {
+  document.getElementById('navLinks').classList.remove('open');
+}
+
 // ===== NAVIGATION =====
 function showPage(page) {
+  closeMenu();
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   const el = document.getElementById('page-'+page);
   if(el) { el.classList.add('active'); window.scrollTo(0,0); }
@@ -1240,8 +1287,10 @@ function updateNavUser() {
 }
 
 async function logout() {
+  if(_realtimeSub) { sb.removeChannel(_realtimeSub); _realtimeSub = null; }
   await sb.auth.signOut();
-  currentUser=null; currentRole='particulier';
+  currentUser = null; currentRole = 'particulier'; activeConvId = null; _convs = [];
+  window._chantiers = [];
   document.getElementById('navGuest').style.display='flex';
   document.getElementById('navUser').style.display='none';
   showPage('home');
@@ -1252,50 +1301,57 @@ async function renderDashPart() {
   document.getElementById('dashWelcomeName').textContent = currentUser.prenom||'';
   document.getElementById('dashNavName').textContent = (currentUser.prenom||'')+' '+(currentUser.nom||'');
 
-  // Charger vrais projets
-  const { data: projetsData } = await sb.from('projets').select('*').eq('particulier_id', currentUser.id).order('created_at', {ascending: false});
-  const projets = projetsData || [];
+  // Loading states
+  document.getElementById('projetsList').innerHTML='<div class="loading-wrap"><div class="spinner"></div></div>';
+  document.getElementById('convListPart').innerHTML='<div class="loading-wrap"><div class="spinner"></div></div>';
 
-  // Charger conversations
-  const { data: convsData } = await sb.from('conversations')
-    .select('*, projets(titre), profiles!conversations_artisan_id_fkey(prenom, nom)')
-    .eq('particulier_id', currentUser.id).order('created_at', {ascending: false}).limit(5);
-  const convs = convsData || [];
+  try {
+    const [projetsRes, convsRes] = await Promise.all([
+      sb.from('projets').select('*').eq('particulier_id', currentUser.id).order('created_at', {ascending: false}),
+      sb.from('conversations')
+        .select('*, projets(titre), profiles!conversations_artisan_id_fkey(prenom, nom)')
+        .eq('particulier_id', currentUser.id).order('created_at', {ascending: false}).limit(5),
+    ]);
+    const projets = projetsRes.data || [];
+    const convs = convsRes.data || [];
 
-  document.getElementById('statProjets').textContent = projets.length;
-  document.getElementById('statMessages').textContent = convs.length;
-  document.getElementById('statTermines').textContent = projets.filter(p=>p.statut==='termine').length;
+    document.getElementById('statProjets').textContent = projets.length;
+    document.getElementById('statMessages').textContent = convs.length;
+    document.getElementById('statTermines').textContent = projets.filter(p=>p.statut==='termine').length;
 
-  const list = document.getElementById('projetsList');
-  if(projets.length===0) {
-    list.innerHTML=`<div class="empty-state"><div class="empty-icon">📁</div><p class="empty-text">Vous n'avez pas encore de projet</p><button class="btn btn-primary" onclick="showPage('nouveau-projet')">+ Déposer mon premier projet</button></div>`;
-  } else {
-    list.innerHTML=projets.map(p=>`
-      <div class="project-item">
-        <div class="proj-info">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-            <div class="proj-title">${p.titre}</div>
-            <span class="badge badge-green">${p.statut==='ouvert'?'Ouvert':p.statut==='termine'?'Terminé':'En cours'}</span>
+    const list = document.getElementById('projetsList');
+    if(projets.length===0) {
+      list.innerHTML=`<div class="empty-state"><div class="empty-icon">📁</div><p class="empty-text">Vous n'avez pas encore de projet</p><button class="btn btn-primary" onclick="showPage('nouveau-projet')">+ Déposer mon premier projet</button></div>`;
+    } else {
+      list.innerHTML=projets.map(p=>`
+        <div class="project-item">
+          <div class="proj-info">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+              <div class="proj-title">${p.titre}</div>
+              <span class="badge ${p.statut==='ouvert'?'badge-green':p.statut==='termine'?'badge-gray':'badge-blue'}">${p.statut==='ouvert'?'Ouvert':p.statut==='termine'?'Terminé':'En cours'}</span>
+            </div>
+            <div class="proj-meta">
+              <span>📍 ${p.localisation}</span>
+              <span>• ${timeAgo(p.created_at)}</span>
+              ${p.nb_devis>0?`<span>• <strong style="color:var(--amber)">${p.nb_devis} devis reçu${p.nb_devis>1?'s':''}</strong></span>`:''}
+            </div>
           </div>
-          <div class="proj-meta">
-            <span>📍 ${p.localisation}</span>
-            <span>• ${timeAgo(p.created_at)}</span>
-            ${p.nb_devis>0?`<span>• <strong style="color:var(--amber)">${p.nb_devis} devis reçu${p.nb_devis>1?'s':''}</strong></span>`:''}
-          </div>
-        </div>
-        <span style="color:var(--gray-300);font-size:18px">›</span>
-      </div>`).join('');
-  }
+          <span style="color:var(--gray-300);font-size:18px">›</span>
+        </div>`).join('');
+    }
 
-  const convList = document.getElementById('convListPart');
-  if(convs.length===0) {
-    convList.innerHTML=`<div class="empty-state" style="padding:32px"><div class="empty-icon">💬</div><p class="empty-text">Aucun message pour l'instant</p></div>`;
-  } else {
-    convList.innerHTML=convs.map(c=>`
-      <div class="conv-item" onclick="showPage('messagerie')">
-        <div class="conv-avatar">👷</div>
-        <div><div class="conv-name">${c.profiles?.prenom||''} ${c.profiles?.nom||''}</div><div class="conv-sub">${c.projets?.titre||''}</div></div>
-      </div>`).join('');
+    const convList = document.getElementById('convListPart');
+    if(convs.length===0) {
+      convList.innerHTML=`<div class="empty-state" style="padding:32px"><div class="empty-icon">💬</div><p class="empty-text">Aucun message pour l'instant</p></div>`;
+    } else {
+      convList.innerHTML=convs.map(c=>`
+        <div class="conv-item" onclick="showPage('messagerie')">
+          <div class="conv-avatar">👷</div>
+          <div><div class="conv-name">${c.profiles?.prenom||''} ${c.profiles?.nom||''}</div><div class="conv-sub">${c.projets?.titre||''}</div></div>
+        </div>`).join('');
+    }
+  } catch(e) {
+    toast('Erreur lors du chargement du tableau de bord', 'error');
   }
 }
 
@@ -1303,29 +1359,38 @@ async function renderDashArt() {
   if(!currentUser) return;
   document.getElementById('artisanWelcomeName').textContent = currentUser.prenom||'';
 
-  const { data: projetsData } = await sb.from('projets').select('*').eq('statut','ouvert').order('created_at',{ascending:false}).limit(20);
-  const projets = projetsData || [];
-  document.getElementById('statChantiers').textContent = projets.length;
+  // Loading states
+  document.getElementById('chantiersList').innerHTML='<div class="loading-wrap"><div class="spinner"></div></div>';
+  document.getElementById('convListArt').innerHTML='<div class="loading-wrap"><div class="spinner"></div></div>';
 
-  const { data: convsData } = await sb.from('conversations')
-    .select('*, projets(titre), profiles!conversations_particulier_id_fkey(prenom, nom)')
-    .eq('artisan_id', currentUser.id).order('created_at',{ascending:false}).limit(5);
-  const convs = convsData || [];
-  document.getElementById('statConvsArt').textContent = convs.length;
+  try {
+    const [projetsRes, convsRes] = await Promise.all([
+      sb.from('projets').select('*').eq('statut','ouvert').order('created_at',{ascending:false}).limit(20),
+      sb.from('conversations')
+        .select('*, projets(titre), profiles!conversations_particulier_id_fkey(prenom, nom)')
+        .eq('artisan_id', currentUser.id).order('created_at',{ascending:false}).limit(5),
+    ]);
+    const projets = projetsRes.data || [];
+    const convs = convsRes.data || [];
 
-  // Rendre chantiers
-  window._chantiers = projets;
-  renderChantiers('');
+    document.getElementById('statChantiers').textContent = projets.length;
+    document.getElementById('statConvsArt').textContent = convs.length;
 
-  const convList = document.getElementById('convListArt');
-  if(convs.length===0) {
-    convList.innerHTML=`<div class="empty-state" style="padding:32px"><div class="empty-icon">💬</div><p class="empty-text">Contactez des particuliers pour démarrer</p></div>`;
-  } else {
-    convList.innerHTML=convs.map(c=>`
-      <div class="conv-item" onclick="showPage('messagerie')">
-        <div class="conv-avatar">👤</div>
-        <div><div class="conv-name">${c.profiles?.prenom||''} ${c.profiles?.nom||''}</div><div class="conv-sub">${c.projets?.titre||''}</div></div>
-      </div>`).join('');
+    window._chantiers = projets;
+    renderChantiers('');
+
+    const convList = document.getElementById('convListArt');
+    if(convs.length===0) {
+      convList.innerHTML=`<div class="empty-state" style="padding:32px"><div class="empty-icon">💬</div><p class="empty-text">Contactez des particuliers pour démarrer</p></div>`;
+    } else {
+      convList.innerHTML=convs.map(c=>`
+        <div class="conv-item" onclick="showPage('messagerie')">
+          <div class="conv-avatar">👤</div>
+          <div><div class="conv-name">${c.profiles?.prenom||''} ${c.profiles?.nom||''}</div><div class="conv-sub">${c.projets?.titre||''}</div></div>
+        </div>`).join('');
+    }
+  } catch(e) {
+    toast('Erreur lors du chargement du tableau de bord', 'error');
   }
 }
 
@@ -1431,6 +1496,7 @@ async function renderMessagerie() {
 
 async function openConv(convId) {
   activeConvId = convId;
+  subscribeToConv(convId);
   const conv = _convs.find(c => c.id === convId);
   if(!conv) return;
 
@@ -1718,8 +1784,50 @@ function toggleFaq(el) {
   if(arr) arr.textContent = ans.classList.contains('open') ? '▲' : '▼';
 }
 
-// Init
+// ===== REALTIME MESSAGING =====
+function subscribeToConv(convId) {
+  // Se désabonner de l'ancienne conversation si elle existe
+  if(_realtimeSub) {
+    sb.removeChannel(_realtimeSub);
+    _realtimeSub = null;
+  }
+  _realtimeSub = sb.channel('messages-' + convId)
+    .on('postgres_changes', {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'messages',
+      filter: `conversation_id=eq.${convId}`,
+    }, (payload) => {
+      const m = payload.new;
+      // Ne pas ajouter si c'est notre propre message (déjà affiché en optimistic)
+      if(m.sender_id === currentUser.id) return;
+      const bubbles = document.getElementById('msgBubbles');
+      if(!bubbles) return;
+      const time = new Date(m.created_at);
+      const timeStr = `${time.getHours()}h${String(time.getMinutes()).padStart(2,'0')}`;
+      const div = document.createElement('div');
+      div.innerHTML = `
+        <div class="msg-bubble-wrap">
+          <div class="msg-bubble other">${m.contenu}</div>
+        </div>
+        <div class="msg-time" style="text-align:left">${timeStr}</div>`;
+      bubbles.appendChild(div);
+      bubbles.scrollTop = bubbles.scrollHeight;
+    })
+    .subscribe();
+}
+
+// ===== INIT =====
 setupHomeScroll();
+
+// Fermer le menu mobile en cliquant à l'extérieur
+document.addEventListener('click', (e) => {
+  const navLinks = document.getElementById('navLinks');
+  const hamburger = document.querySelector('.hamburger');
+  if(navLinks && hamburger && !navLinks.contains(e.target) && !hamburger.contains(e.target)) {
+    navLinks.classList.remove('open');
+  }
+});
 
 // Vérifier session existante
 sb.auth.getSession().then(async ({ data: { session } }) => {
@@ -1734,7 +1842,9 @@ sb.auth.getSession().then(async ({ data: { session } }) => {
 // Écouter changements auth
 sb.auth.onAuthStateChange(async (event, session) => {
   if(event === 'SIGNED_OUT') {
-    currentUser = null; currentRole = 'particulier';
+    currentUser = null;
+    currentRole = 'particulier';
+    if(_realtimeSub) { sb.removeChannel(_realtimeSub); _realtimeSub = null; }
   }
 });
 </script>
