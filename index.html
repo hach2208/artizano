@@ -1086,10 +1086,64 @@ nav.transparent .hamburger span{background:#fff}
 <div id="toast-container"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+// ===== SDK VERSION CHECK =====
+const SUPABASE_SDK_MIN_VERSION = '2.0.0';
+
+function parseVersion(v) {
+  const parts = String(v).replace(/[^0-9.]/g, '').split('.').map(Number);
+  return { major: parts[0] || 0, minor: parts[1] || 0, patch: parts[2] || 0 };
+}
+
+function isVersionAtLeast(actual, minimum) {
+  const a = parseVersion(actual);
+  const m = parseVersion(minimum);
+  if (a.major !== m.major) return a.major > m.major;
+  if (a.minor !== m.minor) return a.minor > m.minor;
+  return a.patch >= m.patch;
+}
+
+function checkSDKVersion() {
+  if (typeof supabase === 'undefined' || typeof supabase.createClient !== 'function') {
+    console.error('[SDK] Supabase JS SDK failed to load.');
+    toast('Erreur : impossible de charger le SDK Supabase. Vérifiez votre connexion et rechargez la page.', 'error');
+    return false;
+  }
+
+  // @supabase/supabase-js exposes version on the module object in some builds
+  const detectedVersion = (typeof supabase.version === 'string') ? supabase.version : null;
+
+  if (detectedVersion) {
+    const vParsed = parseVersion(detectedVersion);
+    if (vParsed.major !== 2) {
+      console.warn(`[SDK] Version majeure inattendue : ${detectedVersion} (attendu : 2.x)`);
+      toast(`Avertissement : version du SDK Supabase inattendue (${detectedVersion}). Des problèmes peuvent survenir.`, 'error');
+      return false;
+    }
+    if (!isVersionAtLeast(detectedVersion, SUPABASE_SDK_MIN_VERSION)) {
+      console.warn(`[SDK] Version trop ancienne : ${detectedVersion} (minimum requis : ${SUPABASE_SDK_MIN_VERSION})`);
+      toast(`Avertissement : SDK Supabase ${detectedVersion} est trop ancien (minimum : ${SUPABASE_SDK_MIN_VERSION}).`, 'error');
+      return false;
+    }
+    console.info(`[SDK] Supabase JS ${detectedVersion} — OK`);
+  } else {
+    // Version not exposed directly; verify the API surface instead
+    const required = ['createClient', 'AuthError', 'PostgrestError'];
+    const missing = required.filter(k => !(k in supabase));
+    if (missing.length > 0) {
+      console.warn(`[SDK] API Supabase incomplète — propriétés manquantes : ${missing.join(', ')}`);
+      toast(`Avertissement : le SDK Supabase semble incompatible. Propriétés manquantes : ${missing.join(', ')}.`, 'error');
+      return false;
+    }
+    console.info('[SDK] Supabase JS v2 chargé (version exacte non disponible) — API vérifiée OK');
+  }
+  return true;
+}
+
 // ===== SUPABASE =====
 const SUPABASE_URL = 'https://kzisuvfgobzhaxgtamyx.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt6aXN1dmZnb2J6aGF4Z3RhbXl4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1NjMyMzAsImV4cCI6MjA5MDEzOTIzMH0.kiVExAuwtM6lr7VW98h7ZeJW8QtTwmNcldvUAUk_U2o';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+checkSDKVersion();
 
 // ===== STATE =====
 let currentUser = null;
