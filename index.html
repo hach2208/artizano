@@ -953,6 +953,11 @@ nav.transparent .hamburger span{background:#fff}
       <div id="projStep3" class="form-card" style="display:none">
         <h2>Localisation & budget</h2>
         <p class="sub">Pour trouver des artisans près de chez vous</p>
+        <div style="margin-bottom:12px">
+          <button type="button" class="btn btn-outline btn-sm" onclick="detectLocation()" id="btnGeo" style="gap:6px">
+            📍 Utiliser ma position actuelle
+          </button>
+        </div>
         <div class="form-row" style="margin-bottom:16px">
           <div class="form-group"><label class="form-label">Ville *</label><input class="form-input" id="projVille" placeholder="Paris" oninput="checkStep3()"></div>
           <div class="form-group"><label class="form-label">Code postal *</label><input class="form-input" id="projCP" placeholder="75001" maxlength="5" oninput="checkStep3()"></div>
@@ -1089,7 +1094,14 @@ nav.transparent .hamburger span{background:#fff}
 // ===== SUPABASE =====
 const SUPABASE_URL = 'https://kzisuvfgobzhaxgtamyx.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt6aXN1dmZnb2J6aGF4Z3RhbXl4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1NjMyMzAsImV4cCI6MjA5MDEzOTIzMH0.kiVExAuwtM6lr7VW98h7ZeJW8QtTwmNcldvUAUk_U2o';
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+    storageKey: 'artizano-auth',
+  }
+});
 
 // ===== STATE =====
 let currentUser = null;
@@ -1581,6 +1593,33 @@ async function sendMsg(convId) {
   }
 }
 
+// ===== GÉOLOCALISATION =====
+function detectLocation() {
+  const btn = document.getElementById('btnGeo');
+  if(!navigator.geolocation) { toast('Géolocalisation non supportée par votre navigateur', 'error'); return; }
+  btn.textContent = '⏳ Localisation…'; btn.disabled = true;
+  navigator.geolocation.getCurrentPosition(async (pos) => {
+    try {
+      const { latitude, longitude } = pos.coords;
+      const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=fr`);
+      const data = await res.json();
+      const ville = data.city || data.locality || data.principalSubdivision || '';
+      const cp = data.postcode || '';
+      document.getElementById('projVille').value = ville;
+      document.getElementById('projCP').value = cp;
+      checkStep3();
+      toast('Position détectée : ' + ville, 'success');
+    } catch(e) {
+      toast('Impossible de récupérer la ville', 'error');
+    } finally {
+      btn.textContent = '📍 Utiliser ma position actuelle'; btn.disabled = false;
+    }
+  }, () => {
+    toast('Accès à la position refusé', 'error');
+    btn.textContent = '📍 Utiliser ma position actuelle'; btn.disabled = false;
+  });
+}
+
 // ===== NOUVEAU PROJET =====
 let projStep=1;
 function goStep(n) {
@@ -1829,13 +1868,24 @@ document.addEventListener('click', (e) => {
   }
 });
 
-// Vérifier session existante
+// Vérifier session existante — restaurer et rediriger
 sb.auth.getSession().then(async ({ data: { session } }) => {
   if(session) {
-    const { data: profile } = await sb.from('profiles').select('*').eq('id', session.user.id).single();
-    currentUser = { ...session.user, ...profile };
-    currentRole = profile?.role || 'particulier';
-    updateNavUser();
+    try {
+      const { data: profile } = await sb.from('profiles').select('*').eq('id', session.user.id).single();
+      currentUser = { ...session.user, ...profile };
+      currentRole = profile?.role || 'particulier';
+      updateNavUser();
+      // Si l'utilisateur était sur une page protégée, on le redirige
+      const page = document.querySelector('.page.active');
+      const pageId = page?.id || '';
+      if(!pageId || pageId === 'page-home' || pageId === 'page-auth') {
+        // rester sur la home, juste mettre à jour la nav
+      }
+    } catch(e) {
+      // session corrompue, on nettoie
+      await sb.auth.signOut();
+    }
   }
 });
 
