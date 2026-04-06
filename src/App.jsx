@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
+import { loadStripe } from '@stripe/stripe-js'
 import jsPDF from 'jspdf'
 import 'jspdf-autotable'
 
-const supabaseUrl = 'https://qiynvwgphkpvqljgeufm.supabase.co'
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFpeW52d2dwaGtwdnFsamdldWZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg3NjExNDMsImV4cCI6MjA4NDMzNzE0M30.LFKe211w4DYSs4LtdIbwH8dty-lwwQ4BdWBN1QoUxa0'
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://qiynvwgphkpvqljgeufm.supabase.co'
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFpeW52d2dwaGtwdnFsamdldWZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg3NjExNDMsImV4cCI6MjA4NDMzNzE0M30.LFKe211w4DYSs4LtdIbwH8dty-lwwQ4BdWBN1QoUxa0'
 const supabase = createClient(supabaseUrl, supabaseKey)
 
 const PRIX = { bulletin: 15, contrat: 30, attestation: 20 }
@@ -324,8 +325,31 @@ export default function App(){
   const [convRes,setConvRes]=useState(null)
 
   useEffect(()=>{
-    supabase.auth.getUser().then(({data:{user}})=>{setUser(user);setLoading(false);if(user)setPage('dashboard')})
-    const {data:{subscription}}=supabase.auth.onAuthStateChange((e,sess)=>{setUser(sess?.user||null);if(sess?.user)setPage('dashboard')})
+    supabase.auth.getUser().then(({data:{user}})=>{
+      setUser(user||null)
+      setLoading(false)
+      if(user) setPage('dashboard')
+    })
+    const {data:{subscription}}=supabase.auth.onAuthStateChange((event,sess)=>{
+      if(event==='SIGNED_IN'&&sess?.user){setUser(sess.user);setPage('dashboard')}
+      else if(event==='SIGNED_OUT'){setUser(null);setPage('home')}
+      else if(event==='TOKEN_REFRESHED'&&sess?.user){setUser(sess.user)}
+    })
+    // Gestion retour Stripe
+    const params=new URLSearchParams(window.location.search)
+    if(params.get('payment_success')==='1'){
+      const saved=localStorage.getItem('panier_pending')
+      if(saved){
+        const items=JSON.parse(saved)
+        items.forEach(async p=>{
+          if(p.type==='bulletin') await supabase.from('bulletins').update({paye:true}).eq('id',p.item.id)
+        })
+        localStorage.removeItem('panier_pending')
+        setPanier([])
+        setModal('payOk')
+      }
+      window.history.replaceState({},'',window.location.pathname)
+    }
     return ()=>subscription.unsubscribe()
   },[])
 
@@ -339,22 +363,40 @@ export default function App(){
   },[searchQ])
 
   const loadData=async()=>{
-    const {data:e}=await supabase.from('entreprises').select('*').eq('user_id',user.id).single()
-    if(e){
-      setEnt(e)
-      const {data:s}=await supabase.from('salaries').select('*').eq('entreprise_id',e.id).eq('actif',true).order('nom')
-      setSals(s||[])
-      const {data:b}=await supabase.from('bulletins').select('*,salaries(*)').eq('entreprise_id',e.id).order('created_at',{ascending:false}).limit(50)
-      setBulls(b||[])
-    }
+    try{
+      const {data:e,error:eErr}=await supabase.from('entreprises').select('*').eq('user_id',user.id).maybeSingle()
+      if(eErr)throw eErr
+      if(e){
+        setEnt(e)
+        const {data:s}=await supabase.from('salaries').select('*').eq('entreprise_id',e.id).eq('actif',true).order('nom')
+        setSals(s||[])
+        const {data:b}=await supabase.from('bulletins').select('*,salaries(*)').eq('entreprise_id',e.id).order('created_at',{ascending:false}).limit(50)
+        setBulls(b||[])
+      }
+    }catch(err){console.error('loadData:',err)}
   }
 
   const handleAuth=async e=>{
     e.preventDefault();setAuthErr('');setAuthLoad(true)
     try{
-      if(authMode==='login'){const {error}=await supabase.auth.signInWithPassword({email,password});if(error)throw error}
-      else{const {error}=await supabase.auth.signUp({email,password});if(error)throw error;setAuthErr('✓ Compte créé ! Connectez-vous.');setAuthMode('login')}
-    }catch(err){setAuthErr(err.message)}
+      if(authMode==='login'){
+        const {data,error}=await supabase.auth.signInWithPassword({email,password})
+        if(error)throw error
+        if(data?.user){setUser(data.user);setPage('dashboard')}
+      }else{
+        const {data,error}=await supabase.auth.signUp({email,password})
+        if(error)throw error
+        if(data?.session){
+          setUser(data.session.user);setPage('dashboard')
+        }else{
+          setAuthErr('✓ Vérifiez votre email pour confirmer votre compte puis connectez-vous.')
+          setAuthMode('login')
+        }
+      }
+    }catch(err){
+      const msgs={'Invalid login credentials':"Email ou mot de passe incorrect.",'User already registered':"Un compte existe déjà avec cet email.",'Email not confirmed':"Confirmez votre email avant de vous connecter."}
+      setAuthErr(msgs[err.message]||err.message)
+    }
     setAuthLoad(false)
   }
 
@@ -454,13 +496,23 @@ export default function App(){
   const totPanier=panier.reduce((a,p)=>a+p.prix,0)
 
   const payer=async()=>{
-    for(const p of panier){
-      if(p.type==='bulletin'){
-        await supabase.from('bulletins').update({paye:true}).eq('id',p.item.id)
-        setBulls(bs=>bs.map(b=>b.id===p.item.id?{...b,paye:true}:b))
+    const stripeKey=import.meta.env.VITE_STRIPE_PUBLIC_KEY
+    const stripeLink=import.meta.env.VITE_STRIPE_PAYMENT_LINK
+    if(stripeKey&&stripeLink){
+      // Sauvegarde du panier pour récupération après retour Stripe
+      localStorage.setItem('panier_pending',JSON.stringify(panier))
+      const returnUrl=window.location.origin+window.location.pathname+'?payment_success=1'
+      window.location.href=`${stripeLink}?success_url=${encodeURIComponent(returnUrl)}`
+    }else{
+      // Mode simulation (sans Stripe configuré)
+      for(const p of panier){
+        if(p.type==='bulletin'){
+          await supabase.from('bulletins').update({paye:true}).eq('id',p.item.id)
+          setBulls(bs=>bs.map(b=>b.id===p.item.id?{...b,paye:true}:b))
+        }
       }
+      setPanier([]);setModal('payOk')
     }
-    setPanier([]);setModal('payOk')
   }
 
   const doConv=()=>{const v=parseFloat(convVal)||0;if(v<=0)return;setConvRes(convMode==='brut'?convertBN(v,convStat):convertNB(v,convStat))}
