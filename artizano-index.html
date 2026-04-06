@@ -1,0 +1,1902 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Artizano — Trouvez l'artisan qu'il vous faut</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#1a2f5a;--navy-dark:#0e1a35;--amber:#f59e0b;--amber-light:#fbbf24;
+  --gray-50:#f8fafc;--gray-100:#f1f5f9;--gray-200:#e2e8f0;--gray-400:#94a3b8;
+  --gray-500:#64748b;--gray-700:#334155;--gray-900:#0f172a;
+  --green:#22c55e;--red:#ef4444;--blue:#3b82f6;
+}
+body{font-family:'DM Sans',sans-serif;background:#fff;color:var(--gray-900);overflow-x:hidden}
+h1,h2,h3,h4{font-family:'Syne',sans-serif}
+.page{display:none;min-height:100vh}
+.page.active{display:block}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;transition:all .3s;padding:0 24px;height:64px;display:flex;align-items:center;justify-content:space-between}
+nav.solid{background:#fff;box-shadow:0 1px 20px rgba(0,0,0,.08)}
+nav.transparent{background:transparent}
+.logo{display:flex;align-items:center;gap:10px;cursor:pointer;text-decoration:none}
+.logo-icon{width:36px;height:36px;background:var(--amber);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.logo-text{font-family:'Syne',sans-serif;font-weight:800;font-size:20px}
+nav.transparent .logo-text{color:#fff}
+nav.solid .logo-text{color:var(--navy)}
+.nav-links{display:flex;align-items:center;gap:24px}
+.nav-link{font-size:14px;font-weight:500;cursor:pointer;transition:color .2s;text-decoration:none}
+nav.transparent .nav-link{color:rgba(255,255,255,.85)}
+nav.solid .nav-link{color:var(--gray-700)}
+.nav-link:hover{color:var(--amber)!important}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:12px;font-weight:600;font-size:14px;cursor:pointer;border:none;transition:all .2s;font-family:'DM Sans',sans-serif}
+.btn-primary{background:var(--amber);color:#fff}
+.btn-primary:hover{background:var(--amber-light);transform:translateY(-1px)}
+.btn-navy{background:var(--navy);color:#fff}
+.btn-navy:hover{background:var(--navy-dark)}
+.btn-outline{background:#fff;color:var(--gray-700);border:1.5px solid var(--gray-200)}
+.btn-outline:hover{border-color:var(--gray-400);background:var(--gray-50)}
+.btn-sm{padding:8px 16px;font-size:13px}
+.btn-lg{padding:14px 28px;font-size:16px;border-radius:14px}
+
+/* HERO */
+.hero{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-dark) 60%,#162445 100%);min-height:100vh;display:flex;align-items:center;position:relative;overflow:hidden;padding-top:64px}
+.hero-dot-pattern{position:absolute;inset:0;opacity:.07;background-image:radial-gradient(circle at 1px 1px,#fff 1px,transparent 0);background-size:36px 36px}
+.hero-glow1{position:absolute;top:15%;right:10%;width:400px;height:400px;background:var(--amber);opacity:.08;border-radius:50%;filter:blur(80px)}
+.hero-glow2{position:absolute;bottom:10%;left:5%;width:300px;height:300px;background:#60a5fa;opacity:.08;border-radius:50%;filter:blur(60px)}
+.hero-content{position:relative;max-width:1200px;margin:0 auto;padding:80px 24px}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.3);color:#fcd34d;padding:8px 16px;border-radius:100px;font-size:13px;font-weight:500;margin-bottom:28px}
+.hero h1{font-size:clamp(42px,6vw,76px);font-weight:800;color:#fff;line-height:1.1;margin-bottom:20px}
+.hero h1 span{color:var(--amber-light)}
+.hero-sub{font-size:18px;color:rgba(255,255,255,.7);margin-bottom:40px;max-width:520px;line-height:1.7}
+.search-bar{background:#fff;border-radius:18px;padding:8px;display:flex;gap:8px;max-width:620px;box-shadow:0 20px 60px rgba(0,0,0,.25);margin-bottom:32px}
+.search-input{flex:1;display:flex;align-items:center;gap:10px;padding:10px 16px}
+.search-input input{border:none;outline:none;font-size:15px;color:var(--gray-900);font-family:'DM Sans',sans-serif;width:100%;background:transparent}
+.search-input input::placeholder{color:var(--gray-400)}
+.search-divider{width:1px;background:var(--gray-200);margin:8px 0}
+.hero-social{display:flex;align-items:center;gap:12px;color:rgba(255,255,255,.6);font-size:14px}
+.avatar-stack{display:flex}
+.avatar-stack img{width:32px;height:32px;border-radius:50%;border:2px solid rgba(255,255,255,.3);margin-right:-8px;background:#1e3a6e}
+.hero-wave{position:absolute;bottom:-1px;left:0;right:0}
+
+/* STATS */
+.stats-section{padding:60px 24px;background:#fff}
+.stats-grid{max-width:1000px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:32px;text-align:center}
+.stat-value{font-family:'Syne',sans-serif;font-size:42px;font-weight:800;color:var(--navy)}
+.stat-label{color:var(--gray-500);font-size:14px;margin-top:4px}
+
+/* CATEGORIES */
+.section{padding:80px 24px}
+.section-center{text-align:center;margin-bottom:48px}
+.section h2{font-size:clamp(28px,4vw,40px);font-weight:800;color:var(--navy);margin-bottom:12px}
+.section-sub{color:var(--gray-500);font-size:17px}
+.cats-grid{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:repeat(6,1fr);gap:16px}
+.cat-card{background:#fff;border:1.5px solid var(--gray-100);border-radius:18px;padding:24px 16px;text-align:center;cursor:pointer;transition:all .2s}
+.cat-card:hover{box-shadow:0 8px 30px rgba(0,0,0,.1);transform:translateY(-4px);border-color:var(--amber)}
+.cat-icon{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:24px;transition:transform .2s}
+.cat-card:hover .cat-icon{transform:scale(1.1)}
+.cat-label{font-size:13px;font-weight:600;color:var(--gray-700)}
+
+/* HOW IT WORKS */
+.how-section{background:var(--gray-50);padding:80px 24px}
+.how-content{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:start}
+.how-badge{display:inline-block;padding:6px 14px;border-radius:100px;font-size:12px;font-weight:700;margin-bottom:24px}
+.how-badge.part{background:#fef3c7;color:#92400e}
+.how-badge.art{background:#dbeafe;color:#1e40af}
+.step{display:flex;gap:16px;margin-bottom:28px}
+.step-num{width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.step-label{font-size:10px;font-weight:800;color:var(--amber);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.step-title{font-family:'Syne',sans-serif;font-weight:700;font-size:17px;color:var(--gray-900);margin-bottom:4px}
+.step-desc{font-size:14px;color:var(--gray-500);line-height:1.6}
+.art-card{background:#fff;border-radius:20px;padding:28px;border:1.5px solid var(--gray-100)}
+.check-item{display:flex;align-items:flex-start;gap:12px;margin-bottom:16px;font-size:14px;color:var(--gray-700)}
+.check-icon{color:var(--green);font-size:17px;flex-shrink:0;margin-top:1px}
+
+/* TRUST */
+.trust-section{background:var(--navy);padding:60px 24px}
+.trust-grid{max-width:900px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);gap:32px;text-align:center}
+.trust-icon-wrap{width:56px;height:56px;background:rgba(245,158,11,.15);border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:24px}
+.trust-title{font-family:'Syne',sans-serif;color:#fff;font-size:17px;font-weight:700;margin-bottom:8px}
+.trust-desc{color:rgba(255,255,255,.6);font-size:13px;line-height:1.6}
+
+/* TEMOIGNAGES */
+.temos-grid{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.temo-card{background:#fff;border-radius:20px;padding:24px;border:1.5px solid var(--gray-100);box-shadow:0 2px 12px rgba(0,0,0,.04)}
+.stars{color:var(--amber);font-size:15px;margin-bottom:12px}
+.temo-text{font-size:14px;color:var(--gray-500);line-height:1.7;font-style:italic;margin-bottom:20px}
+.temo-author{display:flex;align-items:center;gap:12px}
+.temo-avatar{width:40px;height:40px;border-radius:50%;background:var(--gray-100);display:flex;align-items:center;justify-content:center;font-size:18px}
+.temo-name{font-weight:600;font-size:14px;color:var(--gray-900)}
+.temo-city{font-size:12px;color:var(--gray-400)}
+
+/* CTA */
+.cta-section{background:var(--amber);padding:80px 24px;text-align:center}
+.cta-section h2{font-size:clamp(28px,4vw,44px);font-weight:800;color:#fff;margin-bottom:12px}
+.cta-section p{color:rgba(255,255,255,.85);font-size:17px;margin-bottom:32px}
+
+/* AUTH PAGE */
+.auth-page{min-height:100vh;display:grid;grid-template-columns:1fr 1fr}
+.auth-left{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-dark) 100%);display:flex;align-items:center;justify-content:center;padding:48px;position:relative;overflow:hidden}
+.auth-left .dot-bg{position:absolute;inset:0;opacity:.07;background-image:radial-gradient(circle at 1px 1px,#fff 1px,transparent 0);background-size:36px 36px}
+.auth-left-content{position:relative;text-align:center;color:#fff}
+.auth-big-icon{width:80px;height:80px;background:var(--amber);border-radius:24px;display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 24px;box-shadow:0 20px 40px rgba(245,158,11,.3)}
+.auth-left h2{font-size:36px;font-weight:800;margin-bottom:12px}
+.auth-left p{color:rgba(255,255,255,.7);font-size:16px;line-height:1.7;max-width:300px;margin:0 auto}
+.auth-right{display:flex;align-items:center;justify-content:center;padding:48px;background:#fff}
+.auth-form-wrap{width:100%;max-width:420px}
+.tab-switch{background:var(--gray-100);border-radius:14px;padding:4px;display:flex;margin-bottom:28px}
+.tab-btn{flex:1;padding:10px;text-align:center;border-radius:10px;cursor:pointer;font-size:14px;font-weight:600;transition:all .2s;border:none;background:transparent;font-family:'DM Sans',sans-serif;color:var(--gray-500)}
+.tab-btn.active{background:#fff;color:var(--gray-900);box-shadow:0 1px 8px rgba(0,0,0,.1)}
+.role-select{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+.role-card{padding:16px;border-radius:14px;border:2px solid var(--gray-200);cursor:pointer;transition:all .2s;text-align:left}
+.role-card:hover{border-color:var(--gray-400)}
+.role-card.selected{border-color:var(--amber);background:#fffbeb}
+.role-icon{font-size:22px;margin-bottom:8px}
+.role-name{font-weight:700;font-size:14px;color:var(--gray-900)}
+.role-sub{font-size:12px;color:var(--gray-400);margin-top:2px}
+.form-group{margin-bottom:16px}
+.form-label{display:block;font-size:13px;font-weight:600;color:var(--gray-700);margin-bottom:6px}
+.form-input{width:100%;border:1.5px solid var(--gray-200);border-radius:12px;padding:12px 16px;font-size:14px;outline:none;transition:border-color .2s;font-family:'DM Sans',sans-serif}
+.form-input:focus{border-color:var(--amber)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-error{background:#fef2f2;border:1px solid #fecaca;color:var(--red);font-size:13px;padding:12px 16px;border-radius:10px;margin-bottom:16px}
+.form-switch{text-align:center;font-size:14px;color:var(--gray-500);margin-top:20px}
+.form-switch a{color:var(--amber);font-weight:600;cursor:pointer;text-decoration:none}
+.back-link{display:inline-flex;align-items:center;gap:6px;color:var(--gray-400);font-size:13px;cursor:pointer;margin-bottom:28px;transition:color .2s}
+.back-link:hover{color:var(--gray-600)}
+
+/* DASHBOARD */
+.dashboard{padding-top:64px;background:var(--gray-50);min-height:100vh}
+.dash-header{max-width:1200px;margin:0 auto;padding:32px 24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}
+.dash-welcome h1{font-size:28px;font-weight:800;color:var(--navy);margin-bottom:4px}
+.dash-welcome p{color:var(--gray-500);font-size:15px}
+.dash-body{max-width:1200px;margin:0 auto;padding:0 24px 40px}
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
+.stat-card{background:#fff;border-radius:18px;padding:20px;border:1.5px solid var(--gray-100)}
+.stat-card-icon{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:12px}
+.stat-card-val{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--gray-900)}
+.stat-card-label{font-size:13px;color:var(--gray-500);margin-top:2px}
+.dash-grid{display:grid;grid-template-columns:1fr 320px;gap:20px}
+.card{background:#fff;border-radius:20px;border:1.5px solid var(--gray-100);overflow:hidden}
+.card-header{padding:20px 24px;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-family:'Syne',sans-serif;font-weight:700;font-size:17px;color:var(--gray-900)}
+.card-link{font-size:13px;color:var(--amber);font-weight:600;cursor:pointer;text-decoration:none}
+.project-item{padding:18px 24px;border-bottom:1px solid var(--gray-50);display:flex;align-items:center;gap:16px;cursor:pointer;transition:background .15s}
+.project-item:hover{background:var(--gray-50)}
+.project-item:last-child{border-bottom:none}
+.proj-info{flex:1;min-width:0}
+.proj-title{font-weight:600;font-size:15px;color:var(--gray-900);margin-bottom:4px}
+.proj-meta{font-size:12px;color:var(--gray-400);display:flex;gap:12px;flex-wrap:wrap}
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700}
+.badge-green{background:#f0fdf4;color:#15803d}
+.badge-blue{background:#eff6ff;color:#1d4ed8}
+.badge-gray{background:var(--gray-100);color:var(--gray-500)}
+.badge-red{background:#fef2f2;color:#b91c1c}
+.empty-state{padding:60px 24px;text-align:center}
+.empty-icon{font-size:40px;margin-bottom:12px;opacity:.4}
+.empty-text{color:var(--gray-400);font-size:15px;margin-bottom:20px}
+.conv-item{padding:16px 20px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:background .15s;border-bottom:1px solid var(--gray-50)}
+.conv-item:hover{background:var(--gray-50)}
+.conv-avatar{width:42px;height:42px;border-radius:50%;background:var(--gray-100);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.conv-name{font-weight:600;font-size:14px;color:var(--gray-900)}
+.conv-sub{font-size:12px;color:var(--gray-400);truncate:ellipsis}
+
+/* NOUVEAU PROJET */
+.proj-page{padding-top:64px;min-height:100vh;background:var(--gray-50)}
+.proj-inner{max-width:680px;margin:0 auto;padding:40px 24px}
+.progress-steps{display:flex;align-items:center;gap:8px;margin-bottom:32px}
+.step-circle{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;transition:all .3s}
+.step-circle.done{background:var(--green);color:#fff}
+.step-circle.active{background:var(--navy);color:#fff}
+.step-circle.pending{background:var(--gray-200);color:var(--gray-400)}
+.step-line{flex:1;height:2px;background:var(--gray-200);transition:background .3s}
+.step-line.done{background:var(--green)}
+.form-card{background:#fff;border-radius:24px;padding:36px;border:1.5px solid var(--gray-100);box-shadow:0 4px 20px rgba(0,0,0,.04)}
+.form-card h2{font-size:24px;font-weight:800;color:var(--navy);margin-bottom:8px}
+.form-card .sub{color:var(--gray-500);font-size:15px;margin-bottom:28px}
+.cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:28px}
+.cat-option{padding:16px;border-radius:14px;border:2px solid var(--gray-200);cursor:pointer;display:flex;align-items:center;gap:12px;transition:all .2s}
+.cat-option:hover{border-color:var(--gray-400)}
+.cat-option.selected{border-color:var(--amber);background:#fffbeb}
+.cat-option-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;transition:background .2s}
+.cat-option.selected .cat-option-icon{background:var(--amber);color:#fff}
+.cat-option:not(.selected) .cat-option-icon{background:var(--gray-100)}
+.cat-option-label{font-size:14px;font-weight:600;color:var(--gray-700)}
+.urgence-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.urgence-opt{padding:14px;border-radius:14px;border:2px solid var(--gray-200);cursor:pointer;text-align:center;transition:all .2s}
+.urgence-opt:hover{border-color:var(--gray-400)}
+.urgence-opt.selected{border-color:var(--amber);background:#fffbeb}
+.urgence-opt .urg-label{font-size:14px;font-weight:700;color:var(--gray-800)}
+.urgence-opt .urg-sub{font-size:11px;color:var(--gray-400);margin-top:2px}
+.form-nav{display:flex;gap:12px;margin-top:24px}
+.success-card{text-align:center;padding:48px}
+.success-icon{width:80px;height:80px;background:#f0fdf4;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:40px;margin:0 auto 24px}
+
+/* ARTISAN DASH */
+.search-box{position:relative}
+.search-box input{width:100%;border:1.5px solid var(--gray-200);border-radius:12px;padding:10px 16px 10px 40px;font-size:14px;outline:none;font-family:'DM Sans',sans-serif;transition:border-color .2s}
+.search-box input:focus{border-color:var(--amber)}
+.search-box .search-ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--gray-400);font-size:17px}
+.chantier-item{padding:20px 24px;border-bottom:1px solid var(--gray-50);transition:background .15s}
+.chantier-item:hover{background:var(--gray-50)}
+.chantier-header{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.chantier-title{font-weight:700;font-size:15px;color:var(--gray-900);margin-bottom:6px}
+.chantier-desc{font-size:13px;color:var(--gray-500);line-height:1.6;margin-bottom:12px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.chantier-footer{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.chantier-meta{display:flex;gap:16px;flex-wrap:wrap}
+.meta-item{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--gray-400)}
+.pro-banner{background:linear-gradient(135deg,#fffbeb 0%,#fef3c7 100%);border:1.5px solid #fde68a;border-radius:18px;padding:24px;text-align:center}
+.pro-icon{font-size:28px;margin-bottom:8px}
+.pro-price{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--gray-900)}
+.pro-price span{font-family:'DM Sans',sans-serif;font-size:14px;font-weight:400;color:var(--gray-400)}
+
+/* MESSAGERIE */
+.msg-page{padding-top:64px;height:100vh;display:flex;flex-direction:column;background:var(--gray-50)}
+.msg-wrap{flex:1;max-width:1200px;width:100%;margin:0 auto;padding:24px;display:flex;gap:0;height:calc(100vh - 64px)}
+.msg-sidebar{width:280px;background:#fff;border-radius:20px 0 0 20px;border:1.5px solid var(--gray-100);border-right:none;display:flex;flex-direction:column;flex-shrink:0}
+.msg-sidebar-header{padding:20px;border-bottom:1px solid var(--gray-100)}
+.msg-sidebar-title{font-family:'Syne',sans-serif;font-weight:700;font-size:17px;color:var(--gray-900)}
+.msg-conv-list{flex:1;overflow-y:auto}
+.msg-conv-item{padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:background .15s;border-bottom:1px solid var(--gray-50)}
+.msg-conv-item:hover,.msg-conv-item.active{background:var(--gray-50)}
+.msg-conv-item.active{border-left:3px solid var(--amber)}
+.msg-conv-avatar{width:44px;height:44px;border-radius:50%;background:var(--gray-100);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.msg-conv-name{font-weight:600;font-size:14px;color:var(--gray-900)}
+.msg-conv-sub{font-size:12px;color:var(--gray-400);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:140px}
+.msg-main{flex:1;background:#fff;border-radius:0 20px 20px 0;border:1.5px solid var(--gray-100);display:flex;flex-direction:column;overflow:hidden}
+.msg-main-header{padding:16px 24px;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;gap:12px}
+.msg-messages{flex:1;overflow-y:auto;padding:24px;display:flex;flex-direction:column;gap:12px}
+.msg-bubble-wrap{display:flex}
+.msg-bubble-wrap.mine{justify-content:flex-end}
+.msg-bubble{max-width:65%;padding:12px 16px;border-radius:18px;font-size:14px;line-height:1.6}
+.msg-bubble.mine{background:var(--navy);color:#fff;border-bottom-right-radius:4px}
+.msg-bubble.other{background:var(--gray-100);color:var(--gray-900);border-bottom-left-radius:4px}
+.msg-time{font-size:11px;color:var(--gray-400);margin-top:4px;text-align:right}
+.msg-bubble.other + .msg-time{text-align:left}
+.msg-input-area{padding:16px 24px;border-top:1px solid var(--gray-100);display:flex;gap:12px;align-items:center}
+.msg-input{flex:1;border:1.5px solid var(--gray-200);border-radius:14px;padding:12px 18px;font-size:14px;outline:none;font-family:'DM Sans',sans-serif;transition:border-color .2s;resize:none}
+.msg-input:focus{border-color:var(--amber)}
+.msg-send-btn{width:44px;height:44px;border-radius:12px;background:var(--navy);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s;flex-shrink:0}
+.msg-send-btn:hover{background:var(--navy-dark)}
+.msg-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--gray-400)}
+.msg-empty-icon{font-size:48px;margin-bottom:12px;opacity:.4}
+
+/* PROFIL ARTISAN */
+.profil-page{padding-top:64px;background:var(--gray-50);min-height:100vh}
+.profil-inner{max-width:800px;margin:0 auto;padding:40px 24px}
+.profil-preview{background:#fff;border-radius:20px;border:1.5px solid var(--gray-100);padding:24px;margin-bottom:24px;display:flex;align-items:center;gap:20px}
+.profil-avatar{width:80px;height:80px;border-radius:20px;background:#e0e7ff;display:flex;align-items:center;justify-content:center;font-size:36px;flex-shrink:0}
+.profil-name{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--gray-900)}
+.profil-loc{font-size:14px;color:var(--gray-500);margin-top:4px}
+.specialites-wrap{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.spec-tag{padding:5px 14px;border-radius:100px;font-size:12px;font-weight:600;background:#eff6ff;color:#1d4ed8}
+.spec-tag.selectable{cursor:pointer;transition:all .2s}
+.spec-tag.selectable:hover,.spec-tag.selected{background:var(--amber);color:#fff}
+.section-card{background:#fff;border-radius:20px;border:1.5px solid var(--gray-100);padding:24px;margin-bottom:16px}
+.section-card h3{font-family:'Syne',sans-serif;font-weight:700;font-size:17px;color:var(--gray-900);margin-bottom:16px}
+.avis-item{border-bottom:1px solid var(--gray-100);padding-bottom:16px;margin-bottom:16px}
+.avis-item:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.avis-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.avis-name{font-weight:600;font-size:14px;color:var(--gray-900)}
+.avis-stars{color:var(--amber);font-size:14px}
+.avis-comment{font-size:13px;color:var(--gray-500);font-style:italic}
+
+/* TARIFS */
+.tarifs-page{padding-top:64px;min-height:100vh;background:var(--gray-50)}
+.tarifs-hero{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-dark) 100%);padding:80px 24px 120px;text-align:center;position:relative;overflow:hidden}
+.tarifs-hero .dot-bg{position:absolute;inset:0;opacity:.07;background-image:radial-gradient(circle at 1px 1px,#fff 1px,transparent 0);background-size:36px 36px}
+.tarifs-hero h1{font-size:clamp(32px,5vw,54px);font-weight:800;color:#fff;margin-bottom:12px;position:relative}
+.tarifs-hero p{color:rgba(255,255,255,.7);font-size:18px;position:relative}
+.tarifs-cards-wrap{max-width:900px;margin:-60px auto 0;padding:0 24px 80px;display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.tarif-card{background:#fff;border-radius:24px;padding:36px;border:2px solid var(--gray-100);position:relative;transition:transform .2s,box-shadow .2s}
+.tarif-card:hover{transform:translateY(-4px);box-shadow:0 20px 60px rgba(0,0,0,.12)}
+.tarif-card.popular{border-color:var(--amber);box-shadow:0 8px 40px rgba(245,158,11,.15)}
+.popular-badge{position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:var(--amber);color:#fff;font-size:12px;font-weight:800;padding:6px 20px;border-radius:100px;white-space:nowrap;font-family:'DM Sans',sans-serif}
+.tarif-name{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--navy);margin-bottom:6px}
+.tarif-desc{font-size:14px;color:var(--gray-500);margin-bottom:24px;line-height:1.5}
+.tarif-price-block{margin-bottom:28px}
+.price-toggle{background:var(--gray-100);border-radius:12px;padding:4px;display:inline-flex;margin-bottom:28px}
+.price-toggle-btn{padding:8px 20px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;transition:all .2s;border:none;background:transparent;font-family:'DM Sans',sans-serif;color:var(--gray-500)}
+.price-toggle-btn.active{background:#fff;color:var(--gray-900);box-shadow:0 1px 6px rgba(0,0,0,.1)}
+.price-main{font-family:'Syne',sans-serif;font-size:48px;font-weight:800;color:var(--gray-900);line-height:1}
+.price-period{font-family:'DM Sans',sans-serif;font-size:15px;color:var(--gray-400);font-weight:400}
+.price-annual-note{font-size:13px;color:var(--green);font-weight:600;margin-top:6px}
+.price-saving{display:inline-block;background:#f0fdf4;color:var(--green);font-size:12px;font-weight:700;padding:3px 10px;border-radius:100px;margin-top:4px}
+.tarif-features{margin-bottom:28px}
+.tarif-feature{display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;font-size:14px;color:var(--gray-700)}
+.feat-icon-yes{color:var(--green);font-size:16px;flex-shrink:0;margin-top:1px}
+.feat-icon-no{color:var(--gray-300);font-size:16px;flex-shrink:0;margin-top:1px}
+.feat-limit{color:var(--amber);font-weight:600}
+.tarif-cta{width:100%;padding:14px;border-radius:14px;font-weight:700;font-size:15px;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;transition:all .2s}
+.tarif-cta.starter{background:var(--gray-100);color:var(--navy)}
+.tarif-cta.starter:hover{background:var(--gray-200)}
+.tarif-cta.pro{background:var(--amber);color:#fff}
+.tarif-cta.pro:hover{background:var(--amber-light)}
+.tarifs-faq{max-width:700px;margin:0 auto;padding:0 24px 80px}
+.tarifs-faq h2{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--navy);text-align:center;margin-bottom:32px}
+.faq-item{background:#fff;border-radius:16px;border:1.5px solid var(--gray-100);margin-bottom:12px;overflow:hidden}
+.faq-q{padding:18px 20px;font-weight:600;font-size:15px;color:var(--gray-900);cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+.faq-q:hover{background:var(--gray-50)}
+.faq-a{padding:0 20px 18px;font-size:14px;color:var(--gray-500);line-height:1.7;display:none}
+.faq-a.open{display:block}
+.concurrence-section{max-width:900px;margin:0 auto;padding:0 24px 80px}
+.concurrence-section h2{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--navy);text-align:center;margin-bottom:8px}
+.concurrence-sub{text-align:center;color:var(--gray-500);font-size:15px;margin-bottom:32px}
+.compare-table{background:#fff;border-radius:20px;border:1.5px solid var(--gray-100);overflow:hidden}
+.compare-header{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;padding:16px 24px;background:var(--gray-50);border-bottom:1.5px solid var(--gray-100)}
+.compare-header span{font-size:13px;font-weight:700;color:var(--gray-500);text-align:center}
+.compare-header span:first-child{text-align:left}
+.compare-row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;padding:14px 24px;border-bottom:1px solid var(--gray-50);align-items:center}
+.compare-row:last-child{border-bottom:none}
+.compare-row span{text-align:center;font-size:14px}
+.compare-row span:first-child{text-align:left;color:var(--gray-700);font-weight:500}
+.compare-yes{color:var(--green);font-size:18px}
+.compare-no{color:var(--gray-300);font-size:18px}
+.compare-artizano{font-weight:700;color:var(--amber)}
+/* FOOTER */
+footer{background:#0f172a;color:var(--gray-400);padding:60px 24px 32px}
+.footer-inner{max-width:1200px;margin:0 auto}
+.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:40px}
+.footer-logo{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.footer-logo span{font-family:'Syne',sans-serif;font-weight:800;color:#fff;font-size:20px}
+.footer-desc{font-size:14px;line-height:1.7}
+.footer-col h4{color:#fff;font-size:14px;font-weight:700;margin-bottom:16px;font-family:'Syne',sans-serif}
+.footer-col a{display:block;font-size:13px;margin-bottom:10px;cursor:pointer;transition:color .2s;color:var(--gray-400);text-decoration:none}
+.footer-col a:hover{color:#fff}
+.footer-bottom{border-top:1px solid rgba(255,255,255,.08);padding-top:24px;text-align:center;font-size:13px}
+
+/* UTILITIES */
+.container{max-width:1200px;margin:0 auto;padding:0 24px}
+.full-btn{width:100%;padding:14px;border-radius:14px;font-weight:700;font-size:15px;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;transition:all .2s}
+.full-btn.navy{background:var(--navy);color:#fff}
+.full-btn.navy:hover{background:var(--navy-dark)}
+.full-btn.amber{background:var(--amber);color:#fff}
+.full-btn.amber:hover{background:var(--amber-light)}
+.full-btn:disabled{opacity:.5;cursor:not-allowed}
+textarea{resize:vertical}
+input[type=number]{-moz-appearance:textfield}
+
+/* TOAST */
+#toast-container{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:10px;pointer-events:none}
+.toast{background:#1e293b;color:#fff;padding:14px 20px;border-radius:14px;font-size:14px;font-family:'DM Sans',sans-serif;box-shadow:0 8px 32px rgba(0,0,0,.2);display:flex;align-items:center;gap:10px;pointer-events:all;animation:toastIn .3s ease;max-width:340px}
+.toast.success{border-left:4px solid var(--green)}
+.toast.error{border-left:4px solid var(--red)}
+.toast.info{border-left:4px solid var(--blue)}
+@keyframes toastIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+/* HAMBURGER */
+.hamburger{display:none;background:none;border:none;cursor:pointer;padding:4px;flex-direction:column;gap:5px}
+.hamburger span{display:block;width:24px;height:2px;background:var(--gray-700);transition:all .2s}
+nav.transparent .hamburger span{background:#fff}
+@media(max-width:768px){
+  .hamburger{display:flex}
+  .nav-links{position:fixed;top:64px;left:0;right:0;background:#fff;flex-direction:column;padding:20px 24px;gap:16px;box-shadow:0 8px 32px rgba(0,0,0,.12);transform:translateY(-120%);transition:transform .3s;z-index:99}
+  .nav-links.open{transform:translateY(0)}
+  .nav-links .nav-link{color:var(--gray-700)!important}
+  #navGuest,#navUser{flex-direction:column;gap:8px}
+  .tarifs-cards-wrap{grid-template-columns:1fr!important}
+  .search-bar{flex-direction:column}
+  .search-divider{display:none}
+  .compare-header,.compare-row{grid-template-columns:2fr 1fr 1fr 1fr!important;font-size:12px}
+}
+
+/* LOADING SPINNER */
+.loading-wrap{display:flex;align-items:center;justify-content:center;padding:40px}
+.spinner{width:32px;height:32px;border:3px solid var(--gray-200);border-top-color:var(--amber);border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:768px){
+  .auth-page{grid-template-columns:1fr}
+  .auth-left{display:none}
+  .cats-grid{grid-template-columns:repeat(3,1fr)}
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+  .how-content{grid-template-columns:1fr}
+  .trust-grid{grid-template-columns:1fr}
+  .temos-grid{grid-template-columns:1fr}
+  .footer-grid{grid-template-columns:1fr 1fr}
+  .dash-grid{grid-template-columns:1fr}
+  .msg-sidebar{display:none}
+  .msg-main{border-radius:20px}
+}
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav id="navbar" class="transparent">
+  <div class="logo" onclick="showPage('home')">
+    <div class="logo-icon">🔨</div>
+    <span class="logo-text">Artizano</span>
+  </div>
+  <button class="hamburger" onclick="toggleMenu()"><span></span><span></span><span></span></button>
+  <div class="nav-links" id="navLinks">
+    <a class="nav-link" onclick="showPage('tarifs');closeMenu()">Tarifs</a>
+    <a class="nav-link" onclick="scrollTo(0,600);closeMenu()">Comment ça marche</a>
+    <a class="nav-link" onclick="heroSearch();closeMenu()">Trouver un artisan</a>
+    <div id="navGuest">
+      <a class="nav-link" onclick="showPage('auth')" style="margin-right:12px">Connexion</a>
+      <button class="btn btn-primary" onclick="showPage('auth')">Déposer un projet</button>
+    </div>
+    <div id="navUser" style="display:none;align-items:center;gap:12px">
+      <a class="nav-link" onclick="showPage('messagerie')">💬</a>
+      <button class="btn btn-navy btn-sm" onclick="goToDash()">Mon espace</button>
+      <a class="nav-link" onclick="logout()" style="font-size:13px">Déconnexion</a>
+    </div>
+  </div>
+</nav>
+
+<!-- HOME PAGE -->
+<div id="page-home" class="page active">
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-dot-pattern"></div>
+    <div class="hero-glow1"></div>
+    <div class="hero-glow2"></div>
+    <div class="hero-content">
+      <div class="hero-badge">⚡ La plateforme #1 pour vos travaux en France</div>
+      <h1>Trouvez l'artisan<br><span>qu'il vous faut</span></h1>
+      <p class="hero-sub">Déposez votre projet gratuitement et recevez des devis d'artisans qualifiés près de chez vous en moins de 48h.</p>
+      <div class="search-bar">
+        <div class="search-input">
+          <span style="font-size:18px;color:#94a3b8">🔍</span>
+          <input type="text" placeholder="Quel type de travaux ?" id="heroSearch">
+        </div>
+        <div class="search-divider"></div>
+        <div class="search-input">
+          <span style="font-size:18px">📍</span>
+          <input type="text" placeholder="Votre ville ou code postal" id="heroCity">
+        </div>
+        <button class="btn btn-primary" onclick="heroSearch()" style="white-space:nowrap">Trouver un artisan →</button>
+      </div>
+      <div class="hero-social">
+        <div class="avatar-stack">
+          <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=1" alt="">
+          <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=2" alt="">
+          <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=3" alt="">
+          <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=4" alt="">
+        </div>
+        <span><strong style="color:#fff">+45 000</strong> projets réalisés avec succès</span>
+      </div>
+    </div>
+    <div class="hero-wave">
+      <svg viewBox="0 0 1440 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M0 80L1440 80L1440 20C1200 70 960 0 720 30C480 60 240 10 0 40L0 80Z" fill="white"/>
+      </svg>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <section class="stats-section">
+    <div class="stats-grid">
+      <div><div class="stat-value">12 000+</div><div class="stat-label">Artisans qualifiés</div></div>
+      <div><div class="stat-value">45 000+</div><div class="stat-label">Projets réalisés</div></div>
+      <div><div class="stat-value">4.8/5</div><div class="stat-label">Note moyenne</div></div>
+      <div><div class="stat-value">72h</div><div class="stat-label">Délai moyen de réponse</div></div>
+    </div>
+  </section>
+
+  <!-- CATÉGORIES -->
+  <section class="section" style="background:var(--gray-50)">
+    <div class="section-center"><h2>Tous types de travaux</h2><p class="section-sub">Quel que soit votre projet, nous avons les artisans qu'il vous faut</p></div>
+    <div class="cats-grid">
+      <div class="cat-card" onclick="searchByCat('Maçonnerie')"><div class="cat-icon" style="background:#fff7ed;color:#ea580c">🧱</div><div class="cat-label">Maçonnerie</div></div>
+      <div class="cat-card" onclick="searchByCat('Peinture')"><div class="cat-icon" style="background:#eff6ff;color:#2563eb">🖌️</div><div class="cat-label">Peinture</div></div>
+      <div class="cat-card" onclick="searchByCat('Plomberie')"><div class="cat-icon" style="background:#ecfeff;color:#0e7490">🔧</div><div class="cat-label">Plomberie</div></div>
+      <div class="cat-card" onclick="searchByCat('Électricité')"><div class="cat-icon" style="background:#fefce8;color:#ca8a04">⚡</div><div class="cat-label">Électricité</div></div>
+      <div class="cat-card" onclick="searchByCat('Menuiserie')"><div class="cat-icon" style="background:#f0fdf4;color:#16a34a">🪟</div><div class="cat-label">Menuiserie</div></div>
+      <div class="cat-card" onclick="searchByCat('Toiture')"><div class="cat-icon" style="background:#fdf4ff;color:#9333ea">🏠</div><div class="cat-label">Toiture</div></div>
+    </div>
+  </section>
+
+  <!-- COMMENT ÇA MARCHE -->
+  <section class="how-section">
+    <div style="max-width:1100px;margin:0 auto">
+      <div class="section-center" style="margin-bottom:48px">
+        <h2>Comment ça marche ?</h2>
+        <p class="section-sub">Simple, rapide et gratuit pour les particuliers</p>
+      </div>
+      <div class="how-content">
+        <div>
+          <div class="how-badge part">Pour les particuliers</div>
+          <div class="step">
+            <div class="step-num" style="background:#fffbeb;color:var(--amber)">📋</div>
+            <div><div class="step-label">Étape 1</div><div class="step-title">Décrivez votre projet</div><div class="step-desc">Renseignez les détails de vos travaux en quelques minutes, c'est gratuit.</div></div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:#fffbeb;color:var(--amber)">👷</div>
+            <div><div class="step-label">Étape 2</div><div class="step-title">Recevez des devis</div><div class="step-desc">Des artisans qualifiés de votre région vous contactent et proposent leurs devis.</div></div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:#fffbeb;color:var(--amber)">💬</div>
+            <div><div class="step-label">Étape 3</div><div class="step-title">Choisissez l'artisan</div><div class="step-desc">Comparez, discutez via la messagerie et choisissez celui qui vous convient.</div></div>
+          </div>
+          <button class="btn btn-primary" onclick="showPage('auth')">Déposer mon projet →</button>
+        </div>
+        <div>
+          <div class="art-card">
+            <div class="how-badge art">Pour les artisans</div>
+            <div class="check-item"><span class="check-icon">✓</span> Accédez à des chantiers qualifiés près de chez vous</div>
+            <div class="check-item"><span class="check-icon">✓</span> Profil professionnel vérifié pour inspirer confiance</div>
+            <div class="check-item"><span class="check-icon">✓</span> Messagerie directe avec les particuliers</div>
+            <div class="check-item"><span class="check-icon">✓</span> Avis clients pour booster votre réputation</div>
+            <div class="check-item"><span class="check-icon">✓</span> Abonnement à partir de 29€/mois seulement</div>
+            <button class="full-btn amber" style="margin-top:20px" onclick="showPageAuth('artisan')">Devenir artisan partenaire</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONFIANCE -->
+  <section class="trust-section">
+    <div class="trust-grid">
+      <div><div class="trust-icon-wrap">🛡️</div><div class="trust-title">Artisans vérifiés</div><div class="trust-desc">Tous nos artisans sont contrôlés : SIRET, assurances, qualifications RGE.</div></div>
+      <div><div class="trust-icon-wrap">⭐</div><div class="trust-title">Avis authentiques</div><div class="trust-desc">Les avis ne peuvent être laissés que par des clients ayant utilisé la plateforme.</div></div>
+      <div><div class="trust-icon-wrap">💬</div><div class="trust-title">Messagerie sécurisée</div><div class="trust-desc">Toutes vos communications sont centralisées et protégées sur notre plateforme.</div></div>
+    </div>
+  </section>
+
+  <!-- TÉMOIGNAGES -->
+  <section class="section">
+    <div class="section-center"><h2>Ils nous font confiance</h2></div>
+    <div class="temos-grid">
+      <div class="temo-card"><div class="stars">★★★★★</div><p class="temo-text">"J'ai trouvé un excellent plombier en moins de 24h. Artizano m'a vraiment simplifié la vie !"</p><div class="temo-author"><div class="temo-avatar">👩</div><div><div class="temo-name">Sophie M.</div><div class="temo-city">Lyon</div></div></div></div>
+      <div class="temo-card"><div class="stars">★★★★★</div><p class="temo-text">"Plateforme sérieuse, artisans vérifiés. Ma rénovation de cuisine s'est passée parfaitement."</p><div class="temo-author"><div class="temo-avatar">👨</div><div><div class="temo-name">Marc D.</div><div class="temo-city">Bordeaux</div></div></div></div>
+      <div class="temo-card"><div class="stars">★★★★☆</div><p class="temo-text">"Très facile à utiliser. J'ai comparé 3 devis et choisi le meilleur rapport qualité-prix."</p><div class="temo-author"><div class="temo-avatar">👩‍🦱</div><div><div class="temo-name">Julie K.</div><div class="temo-city">Paris</div></div></div></div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-section">
+    <h2>Prêt à lancer votre projet ?</h2>
+    <p>Rejoignez plus de 45 000 particuliers qui ont trouvé leur artisan sur Artizano</p>
+    <button class="btn btn-lg" style="background:#fff;color:var(--amber);font-weight:800" onclick="showPage('auth')">Déposer mon projet gratuitement →</button>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-grid">
+        <div>
+          <div class="footer-logo"><div class="logo-icon">🔨</div><span>Artizano</span></div>
+          <p class="footer-desc">La plateforme de mise en relation entre particuliers et artisans qualifiés partout en France.</p>
+        </div>
+        <div class="footer-col"><h4>Particuliers</h4><a onclick="showPage('auth')">Déposer un projet</a><a onclick="showPage('home')">Trouver un artisan</a></div>
+        <div class="footer-col"><h4>Artisans</h4><a onclick="showPageAuth('artisan')">Devenir partenaire</a><a onclick="showPage('tarifs')">Tarifs</a></div>
+        <div class="footer-col"><h4>Légal</h4><a href="privacy.html">Mentions légales</a><a href="privacy.html">CGU</a><a href="privacy.html">Confidentialité</a></div>
+      </div>
+      <div class="footer-bottom">© 2025 Artizano. Tous droits réservés.</div>
+    </div>
+  </footer>
+</div>
+
+<!-- PAGE TARIFS -->
+<div id="page-tarifs" class="page">
+  <nav style="background:#1a2f5a;position:fixed;top:0;left:0;right:0;z-index:100;height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 24px">
+    <div class="logo" onclick="showPage('home')"><div class="logo-icon">🔨</div><span class="logo-text" style="color:#fff">Artizano</span></div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <button class="btn btn-outline btn-sm" style="color:#fff;border-color:rgba(255,255,255,.3)" onclick="showPage('home')">← Retour</button>
+      <button class="btn btn-primary btn-sm" onclick="showPage('auth')">Commencer</button>
+    </div>
+  </nav>
+
+  <div class="tarifs-page">
+    <!-- Hero -->
+    <div class="tarifs-hero">
+      <div class="dot-bg"></div>
+      <div style="position:relative">
+        <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(245,158,11,.2);border:1px solid rgba(245,158,11,.3);color:#fcd34d;padding:6px 16px;border-radius:100px;font-size:13px;font-weight:600;margin-bottom:20px">💰 Zéro commission, jamais</div>
+        <h1>Un tarif clair,<br>sans mauvaises surprises</h1>
+        <p style="max-width:500px;margin:12px auto 0">Payez un abonnement fixe et accédez à tous vos chantiers. On ne touche rien sur vos devis.</p>
+      </div>
+    </div>
+
+    <!-- Toggle mensuel/annuel -->
+    <div style="text-align:center;margin-top:80px;margin-bottom:-40px;position:relative;z-index:2">
+      <div class="price-toggle">
+        <button class="price-toggle-btn active" id="toggleMensuel" onclick="setPeriode('mensuel')">Mensuel</button>
+        <button class="price-toggle-btn" id="toggleAnnuel" onclick="setPeriode('annuel')">Annuel &nbsp;<span style="background:var(--green);color:#fff;font-size:11px;padding:2px 8px;border-radius:100px;font-weight:700">4 mois offerts</span></button>
+      </div>
+    </div>
+
+    <!-- Cartes tarifs -->
+    <div class="tarifs-cards-wrap">
+
+      <!-- STARTER -->
+      <div class="tarif-card">
+        <div class="tarif-name">Starter</div>
+        <div class="tarif-desc">Pour tester la plateforme et commencer à recevoir des chantiers</div>
+        <div class="tarif-price-block">
+          <div style="display:flex;align-items:baseline;gap:6px">
+            <div class="price-main" id="starterPrice">29€</div>
+            <div class="price-period" id="starterPeriod">/mois</div>
+          </div>
+          <div class="price-annual-note" id="starterNote" style="display:none">Facturé 220€/an — soit 18,30€/mois</div>
+          <div class="price-saving" id="starterSaving" style="display:none">🎁 4 mois offerts</div>
+        </div>
+        <div class="tarif-features">
+          <div class="tarif-feature"><span class="feat-icon-yes">✓</span><span>Accès aux projets <span class="feat-limit">(10/mois max)</span></span></div>
+          <div class="tarif-feature"><span class="feat-icon-yes">✓</span><span>Profil artisan complet</span></div>
+          <div class="tarif-feature"><span class="feat-icon-yes">✓</span><span>Badge artisan vérifié</span></div>
+          <div class="tarif-feature"><span class="feat-icon-yes">✓</span><span>Messagerie avec les clients</span></div>
+          <div class="tarif-feature"><span class="feat-icon-yes">✓</span><span>Avis clients visibles</span></div>
+          <div class="tarif-feature"><span class="feat-icon-no">✗</span><span style="color:var(--gray-400)">Profil mis en avant dans les résultats</span></div>
+          <div class="tarif-feature"><span class="feat-icon-no">✗</span><span style="color:var(--gray-400)">Support prioritaire</span></div>
+          <div class="tarif-feature"><span class="feat-icon-no">✗</span><span style="color:var(--gray-400)">Top des résultats de recherche</span></div>
+        </div>
+        <button class="tarif-cta starter" onclick="showPage('auth')">Commencer en Starter</button>
+      </div>
+
+      <!-- PRO -->
+      <div class="tarif-card popular">
+        <div class="popular-badge">⭐ Le plus populaire</div>
+        <div class="tarif-name" style="color:var(--amber)">Pro</div>
+        <div class="tarif-desc">Pour les artisans qui veulent maximiser leur activité</div>
+        <div class="tarif-price-block">
+          <div style="display:flex;align-items:baseline;gap:6px">
+            <div class="price-main" id="proPrice">49€</div>
+            <div class="price-period" id="proPeriod">/mois</div>
+          </div>
+          <div class="price-annual-note" id="proNote" style="display:none">Facturé 390€/an — soit 32,50€/mois</div>
+          <div class="price-saving" id="proSaving" style="display:none">🎁 4 mois offerts</div>
+        </div>
+        <div class="tarif-features">
+          <div class="tarif-feature"><span class="feat-icon-yes">✓</span><span>Accès <strong>illimité</strong> à tous les projets</span></div>
+          <div class="tarif-feature"><span class="feat-icon-yes">✓</span><span>Profil artisan complet</span></div>
+          <div class="tarif-feature"><span class="feat-icon-yes">✓</span><span>Badge artisan vérifié</span></div>
+          <div class="tarif-feature"><span class="feat-icon-yes">✓</span><span>Messagerie avec les clients</span></div>
+          <div class="tarif-feature"><span class="feat-icon-yes">✓</span><span>Avis clients visibles</span></div>
+          <div class="tarif-feature"><span class="feat-icon-yes">✓</span><span><strong>Profil mis en avant</strong> dans les résultats</span></div>
+          <div class="tarif-feature"><span class="feat-icon-yes">✓</span><span>Support prioritaire email + téléphone</span></div>
+          <div class="tarif-feature"><span class="feat-icon-yes">✓</span><span><strong>Top des résultats</strong> de recherche</span></div>
+        </div>
+        <button class="tarif-cta pro" onclick="showPage('auth')">Passer Pro →</button>
+      </div>
+    </div>
+
+    <!-- Garantie -->
+    <div style="max-width:600px;margin:0 auto 60px;padding:0 24px;text-align:center">
+      <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:20px;padding:28px">
+        <div style="font-size:32px;margin-bottom:10px">🛡️</div>
+        <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:18px;color:var(--gray-900);margin-bottom:6px">Satisfait ou remboursé 30 jours</div>
+        <div style="font-size:14px;color:var(--gray-500);line-height:1.6">Pas convaincu ? On vous rembourse intégralement dans les 30 jours, sans question. Résiliez à tout moment depuis votre espace.</div>
+      </div>
+    </div>
+
+    <!-- Comparaison concurrence -->
+    <div class="concurrence-section">
+      <h2>Pourquoi Artizano ?</h2>
+      <p class="concurrence-sub">Comparez avec les autres plateformes du marché</p>
+      <div class="compare-table">
+        <div class="compare-header" style="grid-template-columns:2fr 1fr 1fr 1fr">
+          <span>Critère</span>
+          <span style="color:var(--amber)">Artizano</span>
+          <span>Plateformes<br>à leads</span>
+          <span>Marketplaces<br>à commission</span>
+        </div>
+        <div class="compare-row" style="grid-template-columns:2fr 1fr 1fr 1fr">
+          <span>Commission sur devis</span>
+          <span class="compare-artizano">0%</span>
+          <span style="color:var(--green);font-weight:600">0%</span>
+          <span style="color:var(--red);font-weight:600">10–25%</span>
+        </div>
+        <div class="compare-row" style="grid-template-columns:2fr 1fr 1fr 1fr">
+          <span>Coût par lead / contact</span>
+          <span class="compare-artizano">0€</span>
+          <span style="color:var(--red);font-weight:600">15–60€</span>
+          <span style="color:var(--green);font-weight:600">0€</span>
+        </div>
+        <div class="compare-row" style="grid-template-columns:2fr 1fr 1fr 1fr">
+          <span>Abonnement mensuel fixe</span>
+          <span class="compare-artizano">29–49€</span>
+          <span style="color:var(--gray-500)">30–80€</span>
+          <span style="color:var(--gray-500)">Variable</span>
+        </div>
+        <div class="compare-row" style="grid-template-columns:2fr 1fr 1fr 1fr">
+          <span>Accès illimité aux projets</span>
+          <span class="compare-yes">✓</span>
+          <span class="compare-no">✗</span>
+          <span class="compare-no">✗</span>
+        </div>
+        <div class="compare-row" style="grid-template-columns:2fr 1fr 1fr 1fr">
+          <span>Messagerie directe client</span>
+          <span class="compare-yes">✓</span>
+          <span class="compare-no">✗</span>
+          <span class="compare-yes">✓</span>
+        </div>
+        <div class="compare-row" style="grid-template-columns:2fr 1fr 1fr 1fr">
+          <span>Résiliation libre</span>
+          <span class="compare-yes">✓</span>
+          <span class="compare-no">✗</span>
+          <span class="compare-yes">✓</span>
+        </div>
+        <div class="compare-row" style="background:var(--gray-50);grid-template-columns:2fr 1fr 1fr 1fr">
+          <span style="font-weight:700">Coût réel pour 5 chantiers/mois</span>
+          <span class="compare-artizano">49€</span>
+          <span style="color:var(--red);font-weight:700">~200€+</span>
+          <span style="color:var(--red);font-weight:700">~300€+</span>
+        </div>
+      </div>
+      <p style="text-align:center;font-size:12px;color:var(--gray-400);margin-top:12px">* Estimations basées sur les modèles tarifaires moyens du marché français en 2025</p>
+    </div>
+
+    <!-- FAQ -->
+    <div class="tarifs-faq">
+      <h2>Questions fréquentes</h2>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)"><span>Est-ce vraiment sans commission ?</span><span id="faqArr1">▼</span></div>
+        <div class="faq-a">Oui, à 100%. Artizano ne prend jamais de pourcentage sur vos devis ou vos chantiers. Vous payez un abonnement fixe mensuel ou annuel, c'est tout. Ce que vous facturez à vos clients vous appartient entièrement.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)"><span>Quelle est la différence entre Starter et Pro ?</span><span>▼</span></div>
+        <div class="faq-a">Le Starter vous donne accès à 10 projets par mois — parfait pour démarrer et tester la plateforme. Le Pro débloque l'accès illimité + votre profil apparaît en tête des résultats de recherche, ce qui augmente significativement votre visibilité auprès des particuliers.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)"><span>Puis-je changer de formule à tout moment ?</span><span>▼</span></div>
+        <div class="faq-a">Oui, vous pouvez passer de Starter à Pro (ou l'inverse) depuis votre espace personnel, à tout moment. Le changement prend effet immédiatement et la facturation est ajustée au prorata.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)"><span>Comment fonctionne la garantie 30 jours ?</span><span>▼</span></div>
+        <div class="faq-a">Si vous n'êtes pas satisfait dans les 30 jours suivant votre inscription, contactez notre support et nous vous remboursons intégralement, sans condition et sans délai. Pas de question, pas de rétention.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)"><span>Le paiement annuel, c'est avantageux ?</span><span>▼</span></div>
+        <div class="faq-a">Très avantageux : en Starter annuel vous payez 220€ au lieu de 348€ (soit 4 mois gratuits). En Pro annuel 390€ au lieu de 588€. En plus vous sécurisez votre tarif pour 12 mois et bénéficiez du support prioritaire inclus sur le plan annuel.</div>
+      </div>
+    </div>
+
+    <!-- CTA final -->
+    <div style="background:var(--navy);padding:60px 24px;text-align:center">
+      <h2 style="font-family:'Syne',sans-serif;font-size:36px;font-weight:800;color:#fff;margin-bottom:12px">Prêt à développer votre activité ?</h2>
+      <p style="color:rgba(255,255,255,.7);font-size:17px;margin-bottom:28px">Rejoignez des milliers d'artisans qui trouvent des chantiers sur Artizano</p>
+      <button class="btn btn-primary btn-lg" onclick="showPage('auth')">Commencer gratuitement →</button>
+      <div style="color:rgba(255,255,255,.4);font-size:13px;margin-top:12px">✓ Aucune carte requise pour l'inscription • ✓ Résiliation à tout moment</div>
+    </div>
+  </div>
+</div>
+
+<!-- AUTH PAGE -->
+<div id="page-auth" class="page">
+  <div class="auth-page">
+    <div class="auth-left">
+      <div class="dot-bg"></div>
+      <div class="auth-left-content">
+        <div class="auth-big-icon">🔨</div>
+        <h2 id="authLeftTitle">Rejoignez Artizano</h2>
+        <p id="authLeftSub">Des milliers de projets vous attendent. Inscrivez-vous et commencez dès aujourd'hui.</p>
+      </div>
+    </div>
+    <div class="auth-right">
+      <div class="auth-form-wrap">
+        <div class="back-link" onclick="showPage('home')">← Retour à l'accueil</div>
+        <div class="tab-switch">
+          <button class="tab-btn active" id="tabLogin" onclick="switchTab('login')">Connexion</button>
+          <button class="tab-btn" id="tabRegister" onclick="switchTab('register')">Inscription</button>
+        </div>
+        <div id="formError" class="form-error" style="display:none"></div>
+
+        <!-- ROLE SELECT (register only) -->
+        <div id="roleSelect" style="display:none">
+          <div style="font-size:13px;font-weight:600;color:var(--gray-700);margin-bottom:10px">Je suis…</div>
+          <div class="role-select">
+            <div class="role-card selected" id="roleParticulier" onclick="selectRole('particulier')">
+              <div class="role-icon">🏠</div>
+              <div class="role-name">Un particulier</div>
+              <div class="role-sub">Je cherche un artisan</div>
+            </div>
+            <div class="role-card" id="roleArtisan" onclick="selectRole('artisan')">
+              <div class="role-icon">🔧</div>
+              <div class="role-name">Un artisan</div>
+              <div class="role-sub">Je cherche des chantiers</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- NAMES (register only) -->
+        <div id="namesRow" style="display:none">
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Prénom</label><input class="form-input" id="prenom" placeholder="Jean"></div>
+            <div class="form-group"><label class="form-label">Nom</label><input class="form-input" id="nom" placeholder="Dupont"></div>
+          </div>
+        </div>
+
+        <div class="form-group"><label class="form-label">Email</label><input class="form-input" type="email" id="email" placeholder="jean@exemple.fr"></div>
+        <div class="form-group"><label class="form-label">Mot de passe</label><input class="form-input" type="password" id="password" placeholder="8 caractères minimum"></div>
+        <button class="full-btn navy" id="authBtn" onclick="handleAuth()">Se connecter</button>
+        <div class="form-switch" id="formSwitch">
+          Pas encore de compte ? <a onclick="switchTab('register')">S'inscrire</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DASHBOARD PARTICULIER -->
+<div id="page-dash-particulier" class="page">
+  <nav id="navbar-dash" style="background:#fff;box-shadow:0 1px 20px rgba(0,0,0,.08);position:fixed;top:0;left:0;right:0;z-index:100;height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 24px">
+    <div class="logo" onclick="showPage('dash-particulier')"><div class="logo-icon">🔨</div><span class="logo-text" style="color:var(--navy)">Artizano</span></div>
+    <div style="display:flex;align-items:center;gap:16px">
+      <span style="font-size:13px;color:var(--gray-500)" id="dashNavName"></span>
+      <button class="btn btn-outline btn-sm" onclick="logout()">Déconnexion</button>
+    </div>
+  </nav>
+  <div class="dashboard">
+    <div class="dash-header">
+      <div class="dash-welcome">
+        <h1>Bonjour, <span id="dashWelcomeName"></span> 👋</h1>
+        <p>Gérez vos projets et vos artisans depuis votre espace</p>
+      </div>
+      <button class="btn btn-primary" onclick="showPage('nouveau-projet')">+ Nouveau projet</button>
+    </div>
+    <div class="dash-body">
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-card-icon" style="background:#fef3c7;color:var(--amber)">📁</div><div class="stat-card-val" id="statProjets">0</div><div class="stat-card-label">Projets déposés</div></div>
+        <div class="stat-card"><div class="stat-card-icon" style="background:#dbeafe;color:var(--blue)">💬</div><div class="stat-card-val" id="statMessages">0</div><div class="stat-card-label">Messages reçus</div></div>
+        <div class="stat-card"><div class="stat-card-icon" style="background:#f0fdf4;color:var(--green)">✅</div><div class="stat-card-val" id="statTermines">0</div><div class="stat-card-label">Projets terminés</div></div>
+      </div>
+      <div class="dash-grid">
+        <div class="card">
+          <div class="card-header"><span class="card-title">Mes projets</span></div>
+          <div id="projetsList"></div>
+        </div>
+        <div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">Messages</span><a class="card-link" onclick="showPage('messagerie')">Voir tout</a></div>
+            <div id="convListPart"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DASHBOARD ARTISAN -->
+<div id="page-dash-artisan" class="page">
+  <nav style="background:#fff;box-shadow:0 1px 20px rgba(0,0,0,.08);position:fixed;top:0;left:0;right:0;z-index:100;height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 24px">
+    <div class="logo" onclick="showPage('dash-artisan')"><div class="logo-icon">🔨</div><span class="logo-text" style="color:var(--navy)">Artizano</span></div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <button class="btn btn-outline btn-sm" onclick="showPage('profil-artisan')">⚙️ Mon profil</button>
+      <button class="btn btn-outline btn-sm" onclick="logout()">Déconnexion</button>
+    </div>
+  </nav>
+  <div class="dashboard">
+    <div class="dash-header">
+      <div class="dash-welcome">
+        <h1>Bonjour, <span id="artisanWelcomeName"></span> 👷</h1>
+        <p>Trouvez des chantiers près de chez vous</p>
+      </div>
+      <button class="btn btn-primary" onclick="showPage('messagerie')">💬 Mes conversations</button>
+    </div>
+    <div class="dash-body">
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-card-icon" style="background:#dbeafe;color:var(--blue)">🏗️</div><div class="stat-card-val" id="statChantiers">0</div><div class="stat-card-label">Projets disponibles</div></div>
+        <div class="stat-card"><div class="stat-card-icon" style="background:#f0fdf4;color:var(--green)">💬</div><div class="stat-card-val" id="statConvsArt">0</div><div class="stat-card-label">Conversations</div></div>
+        <div class="stat-card"><div class="stat-card-icon" style="background:#fef3c7;color:var(--amber)">⭐</div><div class="stat-card-val">4.8</div><div class="stat-card-label">Note moyenne</div></div>
+      </div>
+      <div class="dash-grid">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Chantiers disponibles</span>
+            <div class="search-box" style="width:220px">
+              <span class="search-ic">🔍</span>
+              <input type="text" placeholder="Rechercher…" id="chantierSearch" oninput="filterChantiers()">
+            </div>
+          </div>
+          <div id="chantiersList" style="max-height:500px;overflow-y:auto"></div>
+        </div>
+        <div>
+          <div class="card" style="margin-bottom:16px">
+            <div class="card-header"><span class="card-title">Mes conversations</span><a class="card-link" onclick="showPage('messagerie')">Tout voir</a></div>
+            <div id="convListArt"></div>
+          </div>
+          <div class="pro-banner">
+            <div class="pro-icon">👑</div>
+            <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:18px;color:var(--gray-900);margin-bottom:6px">Passez Pro</div>
+            <p style="font-size:13px;color:var(--gray-600);margin-bottom:12px">Contactez un nombre illimité de clients et boostez votre visibilité.</p>
+            <div class="pro-price">29 € <span>/mois</span></div>
+            <button class="full-btn amber" style="margin-top:14px" onclick="showPage('tarifs')">Voir les offres →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- NOUVEAU PROJET -->
+<div id="page-nouveau-projet" class="page">
+  <nav style="background:#fff;box-shadow:0 1px 20px rgba(0,0,0,.08);position:fixed;top:0;left:0;right:0;z-index:100;height:64px;display:flex;align-items:center;padding:0 24px">
+    <div class="logo" onclick="showPage('dash-particulier')"><div class="logo-icon">🔨</div><span class="logo-text" style="color:var(--navy)">Artizano</span></div>
+  </nav>
+  <div class="proj-page">
+    <div class="proj-inner">
+      <div class="back-link" onclick="showPage('dash-particulier')">← Mon espace</div>
+      <div class="progress-steps" id="progressSteps">
+        <div class="step-circle active" id="sc1">1</div>
+        <div class="step-line" id="sl1"></div>
+        <div class="step-circle pending" id="sc2">2</div>
+        <div class="step-line" id="sl2"></div>
+        <div class="step-circle pending" id="sc3">3</div>
+      </div>
+
+      <!-- Étape 1 -->
+      <div id="projStep1" class="form-card">
+        <h2>Quel type de travaux ?</h2>
+        <p class="sub">Sélectionnez la catégorie qui correspond à votre projet</p>
+        <div class="cat-grid" id="catGrid">
+          <div class="cat-option" onclick="selectCat('Maçonnerie / Gros œuvre')"><div class="cat-option-icon">🧱</div><div class="cat-option-label">Maçonnerie / Gros œuvre</div></div>
+          <div class="cat-option" onclick="selectCat('Peinture / Revêtements')"><div class="cat-option-icon">🖌️</div><div class="cat-option-label">Peinture / Revêtements</div></div>
+          <div class="cat-option" onclick="selectCat('Plomberie / Sanitaire')"><div class="cat-option-icon">🔧</div><div class="cat-option-label">Plomberie / Sanitaire</div></div>
+          <div class="cat-option" onclick="selectCat('Électricité')"><div class="cat-option-icon">⚡</div><div class="cat-option-label">Électricité</div></div>
+          <div class="cat-option" onclick="selectCat('Carrelage / Sol')"><div class="cat-option-icon">🪟</div><div class="cat-option-label">Carrelage / Sol</div></div>
+          <div class="cat-option" onclick="selectCat('Menuiserie / Charpente')"><div class="cat-option-icon">🪵</div><div class="cat-option-label">Menuiserie / Charpente</div></div>
+          <div class="cat-option" onclick="selectCat('Toiture / Couverture')"><div class="cat-option-icon">🏠</div><div class="cat-option-label">Toiture / Couverture</div></div>
+          <div class="cat-option" onclick="selectCat('Chauffage / Climatisation')"><div class="cat-option-icon">🌡️</div><div class="cat-option-label">Chauffage / Clim</div></div>
+        </div>
+        <button class="full-btn navy" id="btnStep1" disabled onclick="goStep(2)">Continuer →</button>
+      </div>
+
+      <!-- Étape 2 -->
+      <div id="projStep2" class="form-card" style="display:none">
+        <h2>Décrivez votre projet</h2>
+        <p class="sub">Plus vous êtes précis, meilleurs seront les devis reçus</p>
+        <div class="form-group"><label class="form-label">Titre du projet *</label><input class="form-input" id="projTitre" placeholder="Ex: Rénovation complète salle de bain 8m²" oninput="checkStep2()"></div>
+        <div class="form-group"><label class="form-label">Description détaillée *</label><textarea class="form-input" id="projDesc" rows="5" placeholder="Décrivez vos travaux : surface, matériaux souhaités, contraintes particulières..." oninput="checkStep2()"></textarea></div>
+        <div class="form-nav">
+          <button class="btn btn-outline" style="flex:1;padding:14px" onclick="goStep(1)">Retour</button>
+          <button class="full-btn navy" id="btnStep2" disabled style="flex:2" onclick="goStep(3)">Continuer →</button>
+        </div>
+      </div>
+
+      <!-- Étape 3 -->
+      <div id="projStep3" class="form-card" style="display:none">
+        <h2>Localisation & budget</h2>
+        <p class="sub">Pour trouver des artisans près de chez vous</p>
+        <div style="margin-bottom:12px">
+          <button type="button" class="btn btn-outline btn-sm" onclick="detectLocation()" id="btnGeo" style="gap:6px">
+            📍 Utiliser ma position actuelle
+          </button>
+        </div>
+        <div class="form-row" style="margin-bottom:16px">
+          <div class="form-group"><label class="form-label">Ville *</label><input class="form-input" id="projVille" placeholder="Paris" oninput="checkStep3()"></div>
+          <div class="form-group"><label class="form-label">Code postal *</label><input class="form-input" id="projCP" placeholder="75001" maxlength="5" oninput="checkStep3()"></div>
+        </div>
+        <div class="form-row" style="margin-bottom:16px">
+          <div class="form-group"><label class="form-label">Budget min (€)</label><input class="form-input" type="number" id="projBudgetMin" placeholder="500"></div>
+          <div class="form-group"><label class="form-label">Budget max (€)</label><input class="form-input" type="number" id="projBudgetMax" placeholder="2000"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Urgence</label>
+          <div class="urgence-grid">
+            <div class="urgence-opt selected" id="urg-flexible" onclick="selectUrgence('flexible')"><div class="urg-label">Flexible</div><div class="urg-sub">Je ne suis pas pressé</div></div>
+            <div class="urgence-opt" id="urg-dans_1_mois" onclick="selectUrgence('dans_1_mois')"><div class="urg-label">Ce mois-ci</div><div class="urg-sub">Dans les 4 semaines</div></div>
+            <div class="urgence-opt" id="urg-urgent" onclick="selectUrgence('urgent')"><div class="urg-label">🔴 Urgent</div><div class="urg-sub">Dès que possible</div></div>
+          </div>
+        </div>
+        <div class="form-nav" style="margin-top:20px">
+          <button class="btn btn-outline" style="flex:1;padding:14px" onclick="goStep(2)">Retour</button>
+          <button class="full-btn navy" id="btnStep3" disabled style="flex:2" onclick="submitProjet()">Publier mon projet</button>
+        </div>
+      </div>
+
+      <!-- Succès -->
+      <div id="projSuccess" class="form-card" style="display:none">
+        <div class="success-card">
+          <div class="success-icon">✅</div>
+          <h2 style="margin-bottom:12px">Projet publié !</h2>
+          <p style="color:var(--gray-500);font-size:16px;margin-bottom:32px">Votre projet est en ligne. Des artisans qualifiés vous contacteront dans les prochaines 48h.</p>
+          <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+            <button class="btn btn-navy" onclick="showPage('dash-particulier')">Mon tableau de bord</button>
+            <button class="btn btn-outline" onclick="resetProjet()">Nouveau projet</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MESSAGERIE -->
+<div id="page-messagerie" class="page">
+  <nav style="background:#fff;box-shadow:0 1px 20px rgba(0,0,0,.08);position:fixed;top:0;left:0;right:0;z-index:100;height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 24px">
+    <div class="logo" onclick="goToDash()"><div class="logo-icon">🔨</div><span class="logo-text" style="color:var(--navy)">Artizano</span></div>
+    <button class="btn btn-outline btn-sm" onclick="goToDash()">← Mon espace</button>
+  </nav>
+  <div class="msg-page">
+    <div class="msg-wrap">
+      <div class="msg-sidebar">
+        <div class="msg-sidebar-header"><div class="msg-sidebar-title">Messages</div></div>
+        <div class="msg-conv-list" id="msgConvList"></div>
+      </div>
+      <div class="msg-main">
+        <div id="msgMainContent" class="msg-empty">
+          <div class="msg-empty-icon">💬</div>
+          <p>Sélectionnez une conversation</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PROFIL ARTISAN -->
+<div id="page-profil-artisan" class="page">
+  <nav style="background:#fff;box-shadow:0 1px 20px rgba(0,0,0,.08);position:fixed;top:0;left:0;right:0;z-index:100;height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 24px">
+    <div class="logo" onclick="showPage('dash-artisan')"><div class="logo-icon">🔨</div><span class="logo-text" style="color:var(--navy)">Artizano</span></div>
+    <button class="btn btn-primary btn-sm" onclick="saveProfil()">💾 Enregistrer</button>
+  </nav>
+  <div class="profil-page">
+    <div class="profil-inner">
+      <div class="back-link" onclick="showPage('dash-artisan')">← Mon tableau de bord</div>
+      <h1 style="font-size:28px;font-weight:800;color:var(--navy);margin-bottom:24px">Mon profil artisan</h1>
+
+      <!-- Aperçu -->
+      <div class="profil-preview">
+        <div class="profil-avatar" id="profilAvatar">👷</div>
+        <div>
+          <div class="profil-name" id="profilDisplayName">Votre nom</div>
+          <div class="profil-loc" id="profilDisplayLoc">📍 Votre ville</div>
+          <div style="display:flex;align-items:center;gap:4px;margin-top:6px"><span style="color:var(--amber);font-size:14px">★★★★★</span><span style="font-size:13px;color:var(--gray-500);margin-left:4px">4.8/5 (12 avis)</span></div>
+          <div class="specialites-wrap" id="profilDisplaySpecs"></div>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <h3>Informations personnelles</h3>
+        <div class="form-row" style="margin-bottom:12px">
+          <div class="form-group"><label class="form-label">Prénom</label><input class="form-input" id="profPrenom" oninput="updateProfilPreview()"></div>
+          <div class="form-group"><label class="form-label">Nom</label><input class="form-input" id="profNom" oninput="updateProfilPreview()"></div>
+        </div>
+        <div class="form-row" style="margin-bottom:12px">
+          <div class="form-group"><label class="form-label">Téléphone</label><input class="form-input" id="profTel" placeholder="06 XX XX XX XX"></div>
+          <div class="form-group"><label class="form-label">Ville</label><input class="form-input" id="profVille" oninput="updateProfilPreview()"></div>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <h3>Profil professionnel</h3>
+        <div class="form-group"><label class="form-label">Description</label><textarea class="form-input" id="profDesc" rows="4" placeholder="Présentez-vous : votre expérience, votre zone d'intervention…"></textarea></div>
+        <div class="form-group">
+          <label class="form-label">Spécialités</label>
+          <div class="specialites-wrap" id="specSelector">
+            <span class="spec-tag selectable" onclick="toggleSpec(this,'Maçonnerie')">Maçonnerie</span>
+            <span class="spec-tag selectable" onclick="toggleSpec(this,'Peinture')">Peinture</span>
+            <span class="spec-tag selectable" onclick="toggleSpec(this,'Plomberie')">Plomberie</span>
+            <span class="spec-tag selectable" onclick="toggleSpec(this,'Électricité')">Électricité</span>
+            <span class="spec-tag selectable" onclick="toggleSpec(this,'Carrelage')">Carrelage</span>
+            <span class="spec-tag selectable" onclick="toggleSpec(this,'Menuiserie')">Menuiserie</span>
+            <span class="spec-tag selectable" onclick="toggleSpec(this,'Toiture')">Toiture</span>
+            <span class="spec-tag selectable" onclick="toggleSpec(this,'Chauffage')">Chauffage</span>
+            <span class="spec-tag selectable" onclick="toggleSpec(this,'Isolation')">Isolation</span>
+            <span class="spec-tag selectable" onclick="toggleSpec(this,'Façade')">Façade</span>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Années d'expérience</label><input class="form-input" type="number" id="profExp" min="0" value="5"></div>
+          <div class="form-group"><label class="form-label">Rayon (km)</label><input class="form-input" type="number" id="profRayon" min="0" value="30"></div>
+          <div class="form-group"><label class="form-label">Tarif horaire (€)</label><input class="form-input" type="number" id="profTarif" placeholder="45"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Numéro SIRET</label><input class="form-input" id="profSiret" placeholder="12345678901234" maxlength="14"></div>
+      </div>
+
+      <div class="section-card">
+        <h3>Avis reçus (12)</h3>
+        <div class="avis-item"><div class="avis-header"><span class="avis-name">Sophie M. — Lyon</span><span class="avis-stars">★★★★★</span></div><div class="avis-comment">"Excellent travail, ponctuel et propre. Je recommande vivement !"</div></div>
+        <div class="avis-item"><div class="avis-header"><span class="avis-name">Marc D. — Bordeaux</span><span class="avis-stars">★★★★★</span></div><div class="avis-comment">"Très professionnel, à l'écoute de nos besoins."</div></div>
+        <div class="avis-item"><div class="avis-header"><span class="avis-name">Julie K. — Paris</span><span class="avis-stars">★★★★☆</span></div><div class="avis-comment">"Bon travail dans l'ensemble, quelques retards mais qualité au rendez-vous."</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// ===== SUPABASE =====
+const SUPABASE_URL = 'https://kzisuvfgobzhaxgtamyx.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt6aXN1dmZnb2J6aGF4Z3RhbXl4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1NjMyMzAsImV4cCI6MjA5MDEzOTIzMH0.kiVExAuwtM6lr7VW98h7ZeJW8QtTwmNcldvUAUk_U2o';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+    storageKey: 'artizano-auth',
+  }
+});
+
+// ===== STATE =====
+let currentUser = null;
+let currentRole = 'particulier';
+let authMode = 'login';
+let selectedRole = 'particulier';
+let projets = [];
+let conversations = [];
+let activeConvId = null;
+let selectedCat = '';
+let selectedUrgence = 'flexible';
+let _realtimeSub = null; // Supabase Realtime subscription
+
+// ===== TOAST =====
+function toast(msg, type='info') {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  const icons = {success:'✅', error:'❌', info:'ℹ️'};
+  t.innerHTML = `<span>${icons[type]||''}</span><span>${msg}</span>`;
+  c.appendChild(t);
+  setTimeout(() => { t.style.opacity='0'; t.style.transition='opacity .3s'; setTimeout(()=>t.remove(), 300); }, 3500);
+}
+
+// ===== HERO SEARCH =====
+function heroSearch() {
+  if(!currentUser) {
+    showPage('auth');
+    switchTab('register');
+    selectRole('particulier');
+    return;
+  }
+  if(currentRole === 'particulier') {
+    showPage('nouveau-projet');
+  } else {
+    showPage('dash-artisan');
+    setTimeout(()=>{
+      const q = document.getElementById('heroSearch')?.value?.trim() || '';
+      const city = document.getElementById('heroCity')?.value?.trim() || '';
+      if(q || city) {
+        const search = document.getElementById('chantierSearch');
+        if(search) { search.value = q || city; filterChantiers(); }
+      }
+    }, 300);
+  }
+}
+
+function searchByCat(cat) {
+  if(!currentUser) {
+    showPage('auth');
+    switchTab('register');
+    selectRole('particulier');
+    return;
+  }
+  if(currentRole === 'particulier') {
+    showPage('nouveau-projet');
+    selectCat(cat);
+  } else {
+    showPage('dash-artisan');
+    setTimeout(()=>{
+      const search = document.getElementById('chantierSearch');
+      if(search) { search.value = cat; filterChantiers(); }
+    }, 300);
+  }
+}
+
+// ===== HAMBURGER MENU =====
+function toggleMenu() {
+  document.getElementById('navLinks').classList.toggle('open');
+}
+function closeMenu() {
+  document.getElementById('navLinks').classList.remove('open');
+}
+
+// ===== NAVIGATION =====
+function showPage(page) {
+  closeMenu();
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const el = document.getElementById('page-'+page);
+  if(el) { el.classList.add('active'); window.scrollTo(0,0); }
+  updateNav(page);
+  if(page==='home') setupHomeScroll();
+  if(page==='dash-particulier') renderDashPart();
+  if(page==='dash-artisan') renderDashArt();
+  if(page==='messagerie') renderMessagerie();
+  if(page==='profil-artisan') loadProfilArtisan();
+}
+
+function updateNav(page) {
+  const nav = document.getElementById('navbar');
+  if(!nav) return;
+  if(page==='home') {
+    nav.className = 'transparent';
+    document.getElementById('navGuest').style.display = currentUser ? 'none' : 'flex';
+    document.getElementById('navUser').style.display = currentUser ? 'flex' : 'none';
+  } else {
+    nav.className = 'solid';
+    document.getElementById('navGuest').style.display = currentUser ? 'none' : 'flex';
+    document.getElementById('navUser').style.display = currentUser ? 'flex' : 'none';
+  }
+}
+
+function setupHomeScroll() {
+  const nav = document.getElementById('navbar');
+  if(!nav) return;
+  function onScroll() {
+    nav.className = window.scrollY > 30 ? 'solid' : 'transparent';
+  }
+  window.addEventListener('scroll', onScroll);
+  onScroll();
+}
+
+function goToDash() {
+  if(!currentUser) { showPage('auth'); return; }
+  showPage(currentRole === 'artisan' ? 'dash-artisan' : 'dash-particulier');
+}
+
+// ===== AUTH =====
+let authTab = 'login';
+function switchTab(tab) {
+  authTab = tab;
+  document.getElementById('tabLogin').className = 'tab-btn'+(tab==='login'?' active':'');
+  document.getElementById('tabRegister').className = 'tab-btn'+(tab==='register'?' active':'');
+  document.getElementById('roleSelect').style.display = tab==='register'?'block':'none';
+  document.getElementById('namesRow').style.display = tab==='register'?'block':'none';
+  document.getElementById('authBtn').textContent = tab==='login'?'Se connecter':'Créer mon compte';
+  document.getElementById('formSwitch').innerHTML = tab==='login'
+    ? 'Pas encore de compte ? <a onclick="switchTab(\'register\')">S\'inscrire</a>'
+    : 'Déjà un compte ? <a onclick="switchTab(\'login\')">Se connecter</a>';
+  document.getElementById('authLeftTitle').textContent = tab==='register'?'Rejoignez Artizano':'Bon retour !';
+  document.getElementById('authLeftSub').textContent = tab==='register'
+    ? 'Des milliers de projets vous attendent.'
+    : 'Connectez-vous pour accéder à vos projets.';
+  document.getElementById('formError').style.display='none';
+}
+
+function showPageAuth(role) {
+  selectedRole = role;
+  showPage('auth');
+  switchTab('register');
+  selectRole(role);
+}
+
+function selectRole(role) {
+  selectedRole = role;
+  document.getElementById('roleParticulier').className = 'role-card'+(role==='particulier'?' selected':'');
+  document.getElementById('roleArtisan').className = 'role-card'+(role==='artisan'?' selected':'');
+}
+
+async function handleAuth() {
+  const email = document.getElementById('email').value.trim();
+  const pass = document.getElementById('password').value;
+  const err = document.getElementById('formError');
+  err.style.display='none';
+  if(!email || !pass) { err.textContent='Veuillez remplir tous les champs.'; err.style.display='block'; return; }
+  if(pass.length<6) { err.textContent='Mot de passe trop court (6 caractères minimum).'; err.style.display='block'; return; }
+
+  document.getElementById('authBtn').textContent = 'Chargement…';
+  document.getElementById('authBtn').disabled = true;
+
+  try {
+    if(authTab==='register') {
+      const prenom = document.getElementById('prenom').value.trim();
+      const nom = document.getElementById('nom').value.trim();
+      if(!prenom||!nom) { err.textContent='Veuillez renseigner votre prénom et nom.'; err.style.display='block'; return; }
+      const { data, error } = await sb.auth.signUp({
+        email, password: pass,
+        options: { data: { prenom, nom, role: selectedRole } }
+      });
+      if(error) throw error;
+      currentUser = { ...data.user, prenom, nom, role: selectedRole };
+      currentRole = selectedRole;
+    } else {
+      const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+      if(error) throw error;
+      const { data: profile } = await sb.from('profiles').select('*').eq('id', data.user.id).single();
+      currentUser = { ...data.user, ...profile };
+      currentRole = profile?.role || 'particulier';
+    }
+    updateNavUser();
+    goToDash();
+  } catch(e) {
+    err.textContent = e.message === 'Invalid login credentials' ? 'Email ou mot de passe incorrect' : e.message;
+    err.style.display='block';
+  } finally {
+    document.getElementById('authBtn').textContent = authTab==='login' ? 'Se connecter' : 'Créer mon compte';
+    document.getElementById('authBtn').disabled = false;
+  }
+}
+
+function updateNavUser() {
+  if(!currentUser) return;
+  document.getElementById('navGuest').style.display='none';
+  document.getElementById('navUser').style.display='flex';
+}
+
+async function logout() {
+  if(_realtimeSub) { sb.removeChannel(_realtimeSub); _realtimeSub = null; }
+  await sb.auth.signOut();
+  currentUser = null; currentRole = 'particulier'; activeConvId = null; _convs = [];
+  window._chantiers = [];
+  document.getElementById('navGuest').style.display='flex';
+  document.getElementById('navUser').style.display='none';
+  showPage('home');
+}
+
+async function renderDashPart() {
+  if(!currentUser) return;
+  document.getElementById('dashWelcomeName').textContent = currentUser.prenom||'';
+  document.getElementById('dashNavName').textContent = (currentUser.prenom||'')+' '+(currentUser.nom||'');
+
+  // Loading states
+  document.getElementById('projetsList').innerHTML='<div class="loading-wrap"><div class="spinner"></div></div>';
+  document.getElementById('convListPart').innerHTML='<div class="loading-wrap"><div class="spinner"></div></div>';
+
+  try {
+    const [projetsRes, convsRes] = await Promise.all([
+      sb.from('projets').select('*').eq('particulier_id', currentUser.id).order('created_at', {ascending: false}),
+      sb.from('conversations')
+        .select('*, projets(titre), profiles!conversations_artisan_id_fkey(prenom, nom)')
+        .eq('particulier_id', currentUser.id).order('created_at', {ascending: false}).limit(5),
+    ]);
+    const projets = projetsRes.data || [];
+    const convs = convsRes.data || [];
+
+    document.getElementById('statProjets').textContent = projets.length;
+    document.getElementById('statMessages').textContent = convs.length;
+    document.getElementById('statTermines').textContent = projets.filter(p=>p.statut==='termine').length;
+
+    const list = document.getElementById('projetsList');
+    if(projets.length===0) {
+      list.innerHTML=`<div class="empty-state"><div class="empty-icon">📁</div><p class="empty-text">Vous n'avez pas encore de projet</p><button class="btn btn-primary" onclick="showPage('nouveau-projet')">+ Déposer mon premier projet</button></div>`;
+    } else {
+      list.innerHTML=projets.map(p=>`
+        <div class="project-item">
+          <div class="proj-info">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+              <div class="proj-title">${p.titre}</div>
+              <span class="badge ${p.statut==='ouvert'?'badge-green':p.statut==='termine'?'badge-gray':'badge-blue'}">${p.statut==='ouvert'?'Ouvert':p.statut==='termine'?'Terminé':'En cours'}</span>
+            </div>
+            <div class="proj-meta">
+              <span>📍 ${p.localisation}</span>
+              <span>• ${timeAgo(p.created_at)}</span>
+              ${p.nb_devis>0?`<span>• <strong style="color:var(--amber)">${p.nb_devis} devis reçu${p.nb_devis>1?'s':''}</strong></span>`:''}
+            </div>
+          </div>
+          <span style="color:var(--gray-300);font-size:18px">›</span>
+        </div>`).join('');
+    }
+
+    const convList = document.getElementById('convListPart');
+    if(convs.length===0) {
+      convList.innerHTML=`<div class="empty-state" style="padding:32px"><div class="empty-icon">💬</div><p class="empty-text">Aucun message pour l'instant</p></div>`;
+    } else {
+      convList.innerHTML=convs.map(c=>`
+        <div class="conv-item" onclick="showPage('messagerie')">
+          <div class="conv-avatar">👷</div>
+          <div><div class="conv-name">${c.profiles?.prenom||''} ${c.profiles?.nom||''}</div><div class="conv-sub">${c.projets?.titre||''}</div></div>
+        </div>`).join('');
+    }
+  } catch(e) {
+    toast('Erreur lors du chargement du tableau de bord', 'error');
+  }
+}
+
+async function renderDashArt() {
+  if(!currentUser) return;
+  document.getElementById('artisanWelcomeName').textContent = currentUser.prenom||'';
+
+  // Loading states
+  document.getElementById('chantiersList').innerHTML='<div class="loading-wrap"><div class="spinner"></div></div>';
+  document.getElementById('convListArt').innerHTML='<div class="loading-wrap"><div class="spinner"></div></div>';
+
+  try {
+    const [projetsRes, convsRes] = await Promise.all([
+      sb.from('projets').select('*').eq('statut','ouvert').order('created_at',{ascending:false}).limit(20),
+      sb.from('conversations')
+        .select('*, projets(titre), profiles!conversations_particulier_id_fkey(prenom, nom)')
+        .eq('artisan_id', currentUser.id).order('created_at',{ascending:false}).limit(5),
+    ]);
+    const projets = projetsRes.data || [];
+    const convs = convsRes.data || [];
+
+    document.getElementById('statChantiers').textContent = projets.length;
+    document.getElementById('statConvsArt').textContent = convs.length;
+
+    window._chantiers = projets;
+    renderChantiers('');
+
+    const convList = document.getElementById('convListArt');
+    if(convs.length===0) {
+      convList.innerHTML=`<div class="empty-state" style="padding:32px"><div class="empty-icon">💬</div><p class="empty-text">Contactez des particuliers pour démarrer</p></div>`;
+    } else {
+      convList.innerHTML=convs.map(c=>`
+        <div class="conv-item" onclick="showPage('messagerie')">
+          <div class="conv-avatar">👤</div>
+          <div><div class="conv-name">${c.profiles?.prenom||''} ${c.profiles?.nom||''}</div><div class="conv-sub">${c.projets?.titre||''}</div></div>
+        </div>`).join('');
+    }
+  } catch(e) {
+    toast('Erreur lors du chargement du tableau de bord', 'error');
+  }
+}
+
+function filterChantiers() {
+  const q = document.getElementById('chantierSearch').value.toLowerCase();
+  renderChantiers(q);
+}
+
+function renderChantiers(q) {
+  const all = window._chantiers || [];
+  const filtered = all.filter(p=>!q||p.titre.toLowerCase().includes(q)||p.categorie.toLowerCase().includes(q));
+  const list=document.getElementById('chantiersList');
+  if(filtered.length===0) {
+    list.innerHTML=`<div class="empty-state"><div class="empty-icon">🏗️</div><p class="empty-text">${q?'Aucun résultat pour "'+q+'"':'Aucun projet disponible pour le moment'}</p></div>`;
+    return;
+  }
+  list.innerHTML=filtered.map(p=>{
+    const urgClass=p.urgence==='urgent'?'badge-red':'badge-gray';
+    const urgLabel=p.urgence==='urgent'?'🔴 Urgent':p.urgence==='dans_1_mois'?'Ce mois-ci':'Flexible';
+    return `<div class="chantier-item">
+      <div class="chantier-header">
+        <span class="badge badge-blue">${p.categorie}</span>
+        <span class="badge ${urgClass}">${urgLabel}</span>
+      </div>
+      <div class="chantier-title">${p.titre}</div>
+      <div class="chantier-desc">${p.description}</div>
+      <div class="chantier-footer">
+        <div class="chantier-meta">
+          <span class="meta-item">📍 ${p.localisation}</span>
+          ${p.budget_min?`<span class="meta-item">💰 ${p.budget_min.toLocaleString()}–${p.budget_max.toLocaleString()} €</span>`:''}
+          <span class="meta-item">🕐 ${timeAgo(p.created_at)}</span>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="contactParticulier('${p.id}')">💬 Contacter</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function contactParticulier(projId) {
+  if(!currentUser) { showPage('auth'); return; }
+  const proj = (window._chantiers||[]).find(p=>p.id===projId);
+  if(!proj) return;
+  // Vérifier si conversation existe déjà
+  const { data: existing } = await sb.from('conversations')
+    .select('id')
+    .eq('artisan_id', currentUser.id)
+    .eq('projet_id', projId)
+    .maybeSingle();
+  if(!existing) {
+    const { error } = await sb.from('conversations').insert({
+      artisan_id: currentUser.id,
+      particulier_id: proj.particulier_id,
+      projet_id: projId,
+    });
+    if(error) { toast('Erreur lors de la création de la conversation', 'error'); return; }
+    toast('Conversation démarrée !', 'success');
+  }
+  showPage('messagerie');
+}
+
+// ===== MESSAGERIE =====
+let _convs = []; // cache conversations
+
+async function renderMessagerie() {
+  if(!currentUser) return;
+  const list = document.getElementById('msgConvList');
+  list.innerHTML = '<div style="padding:20px;color:var(--gray-400);font-size:13px">Chargement…</div>';
+
+  let query;
+  if(currentRole === 'artisan') {
+    query = sb.from('conversations')
+      .select('*, projets(titre), profiles!conversations_particulier_id_fkey(prenom, nom)')
+      .eq('artisan_id', currentUser.id)
+      .order('created_at', {ascending: false});
+  } else {
+    query = sb.from('conversations')
+      .select('*, projets(titre), profiles!conversations_artisan_id_fkey(prenom, nom)')
+      .eq('particulier_id', currentUser.id)
+      .order('created_at', {ascending: false});
+  }
+
+  const { data: convsData } = await query;
+  _convs = convsData || [];
+
+  if(_convs.length === 0) {
+    list.innerHTML = '<div style="padding:32px;text-align:center;color:var(--gray-400);font-size:13px">Aucune conversation</div>';
+    return;
+  }
+
+  list.innerHTML = _convs.map(c => {
+    const profile = c.profiles;
+    const name = profile ? (profile.prenom + ' ' + profile.nom).trim() : 'Utilisateur';
+    const avatar = currentRole === 'artisan' ? '👤' : '👷';
+    const titre = c.projets?.titre || '';
+    return `<div class="msg-conv-item ${activeConvId===c.id?'active':''}" onclick="openConv('${c.id}')">
+      <div class="msg-conv-avatar">${avatar}</div>
+      <div><div class="msg-conv-name">${name}</div><div class="msg-conv-sub">${titre}</div></div>
+    </div>`;
+  }).join('');
+
+  if(activeConvId) openConv(activeConvId);
+}
+
+async function openConv(convId) {
+  activeConvId = convId;
+  subscribeToConv(convId);
+  const conv = _convs.find(c => c.id === convId);
+  if(!conv) return;
+
+  document.querySelectorAll('.msg-conv-item').forEach(el => el.classList.remove('active'));
+  const activeEl = document.querySelector(`.msg-conv-item[onclick="openConv('${convId}')"]`);
+  if(activeEl) activeEl.classList.add('active');
+
+  const profile = conv.profiles;
+  const otherName = profile ? (profile.prenom + ' ' + profile.nom).trim() : 'Utilisateur';
+  const otherAvatar = currentRole === 'artisan' ? '👤' : '👷';
+  const projetTitre = conv.projets?.titre || '';
+
+  const main = document.getElementById('msgMainContent');
+  main.className = '';
+  main.style.cssText = 'flex:1;display:flex;flex-direction:column;overflow:hidden';
+  main.innerHTML = `
+    <div class="msg-main-header">
+      <div class="msg-conv-avatar">${otherAvatar}</div>
+      <div><div class="msg-conv-name">${otherName}</div><div style="font-size:12px;color:var(--gray-400)">${projetTitre}</div></div>
+    </div>
+    <div class="msg-messages" id="msgBubbles"><div style="text-align:center;color:var(--gray-400);font-size:13px;padding:20px">Chargement…</div></div>
+    <div class="msg-input-area">
+      <input class="msg-input" placeholder="Écrivez votre message…" id="msgInputField" onkeydown="if(event.key==='Enter')sendMsg('${convId}')">
+      <button class="msg-send-btn" onclick="sendMsg('${convId}')">
+        <svg width="18" height="18" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><path d="M22 2L11 13M22 2L15 22 11 13 2 9l20-7z"/></svg>
+      </button>
+    </div>`;
+
+  // Charger messages depuis Supabase
+  const { data: msgs } = await sb.from('messages')
+    .select('*')
+    .eq('conversation_id', convId)
+    .order('created_at', {ascending: true});
+
+  const bubbles = document.getElementById('msgBubbles');
+  if(!bubbles) return;
+
+  if(!msgs || msgs.length === 0) {
+    bubbles.innerHTML = '<div style="text-align:center;color:var(--gray-400);font-size:13px;padding:40px">Démarrez la conversation !</div>';
+  } else {
+    bubbles.innerHTML = msgs.map(m => {
+      const isMine = m.sender_id === currentUser.id;
+      const time = new Date(m.created_at);
+      const timeStr = `${time.getHours()}h${String(time.getMinutes()).padStart(2,'0')}`;
+      return `<div>
+        <div class="msg-bubble-wrap ${isMine?'mine':''}">
+          <div class="msg-bubble ${isMine?'mine':'other'}">${m.contenu}</div>
+        </div>
+        <div class="msg-time" style="${isMine?'text-align:right':'text-align:left'}">${timeStr}</div>
+      </div>`;
+    }).join('');
+    bubbles.scrollTop = bubbles.scrollHeight;
+  }
+}
+
+async function sendMsg(convId) {
+  const input = document.getElementById('msgInputField');
+  if(!input || !input.value.trim()) return;
+  const txt = input.value.trim();
+  input.value = '';
+
+  const now = new Date();
+  const timeStr = `${now.getHours()}h${String(now.getMinutes()).padStart(2,'0')}`;
+
+  // Afficher immédiatement (optimistic UI)
+  const bubbles = document.getElementById('msgBubbles');
+  const div = document.createElement('div');
+  div.innerHTML = `<div class="msg-bubble-wrap mine"><div class="msg-bubble mine">${txt}</div></div><div class="msg-time" style="text-align:right">${timeStr}</div>`;
+  bubbles.appendChild(div);
+  bubbles.scrollTop = bubbles.scrollHeight;
+
+  // Sauvegarder dans Supabase
+  const { error } = await sb.from('messages').insert({
+    conversation_id: convId,
+    sender_id: currentUser.id,
+    contenu: txt,
+  });
+  if(error) {
+    toast('Erreur envoi message : ' + error.message, 'error');
+    div.remove();
+    input.value = txt;
+  }
+}
+
+// ===== GÉOLOCALISATION =====
+function detectLocation() {
+  const btn = document.getElementById('btnGeo');
+  if(!navigator.geolocation) { toast('Géolocalisation non supportée par votre navigateur', 'error'); return; }
+  btn.textContent = '⏳ Localisation…'; btn.disabled = true;
+  navigator.geolocation.getCurrentPosition(async (pos) => {
+    try {
+      const { latitude, longitude } = pos.coords;
+      const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=fr`);
+      const data = await res.json();
+      const ville = data.city || data.locality || data.principalSubdivision || '';
+      const cp = data.postcode || '';
+      document.getElementById('projVille').value = ville;
+      document.getElementById('projCP').value = cp;
+      checkStep3();
+      toast('Position détectée : ' + ville, 'success');
+    } catch(e) {
+      toast('Impossible de récupérer la ville', 'error');
+    } finally {
+      btn.textContent = '📍 Utiliser ma position actuelle'; btn.disabled = false;
+    }
+  }, () => {
+    toast('Accès à la position refusé', 'error');
+    btn.textContent = '📍 Utiliser ma position actuelle'; btn.disabled = false;
+  });
+}
+
+// ===== NOUVEAU PROJET =====
+let projStep=1;
+function goStep(n) {
+  document.getElementById('projStep'+projStep).style.display='none';
+  projStep=n;
+  document.getElementById('projStep'+n).style.display='block';
+  // Update progress
+  for(let i=1;i<=3;i++) {
+    const sc=document.getElementById('sc'+i);
+    if(i<n) sc.className='step-circle done',sc.textContent='✓';
+    else if(i===n) sc.className='step-circle active',sc.textContent=i;
+    else sc.className='step-circle pending',sc.textContent=i;
+  }
+  for(let i=1;i<=2;i++) {
+    document.getElementById('sl'+i).style.background=i<n?'var(--green)':'var(--gray-200)';
+  }
+}
+function selectCat(cat) {
+  selectedCat=cat;
+  document.querySelectorAll('.cat-option').forEach(el=>{
+    el.classList.toggle('selected',el.querySelector('.cat-option-label').textContent===cat);
+  });
+  document.getElementById('btnStep1').disabled=false;
+}
+function checkStep2() {
+  const t=document.getElementById('projTitre').value.trim();
+  const d=document.getElementById('projDesc').value.trim();
+  document.getElementById('btnStep2').disabled=!(t&&d.length>=5);
+}
+function checkStep3() {
+  const v=document.getElementById('projVille').value.trim();
+  const c=document.getElementById('projCP').value.trim();
+  document.getElementById('btnStep3').disabled=!(v&&c.length>=4);
+}
+function selectUrgence(u) {
+  selectedUrgence=u;
+  ['flexible','dans_1_mois','urgent'].forEach(k=>{
+    document.getElementById('urg-'+k).classList.toggle('selected',k===u);
+  });
+}
+async function submitProjet() {
+  if(!currentUser) { showPage('auth'); return; }
+  const btn = document.getElementById('btnStep3');
+  btn.textContent = 'Publication…'; btn.disabled = true;
+  try {
+    const { error } = await sb.from('projets').insert({
+      particulier_id: currentUser.id,
+      titre: document.getElementById('projTitre').value.trim(),
+      description: document.getElementById('projDesc').value.trim(),
+      categorie: selectedCat,
+      localisation: document.getElementById('projVille').value.trim(),
+      code_postal: document.getElementById('projCP').value.trim(),
+      budget_min: document.getElementById('projBudgetMin').value || null,
+      budget_max: document.getElementById('projBudgetMax').value || null,
+      urgence: selectedUrgence,
+    });
+    if(error) throw error;
+    for(let i=1;i<=3;i++) document.getElementById('projStep'+i).style.display='none';
+    document.getElementById('projSuccess').style.display='block';
+    document.getElementById('progressSteps').style.display='none';
+  } catch(e) {
+    toast('Erreur : ' + e.message, 'error');
+  } finally {
+    btn.textContent = 'Publier mon projet'; btn.disabled = false;
+  }
+}
+function resetProjet() {
+  projStep=1; selectedCat=''; selectedUrgence='flexible';
+  for(let i=1;i<=3;i++) document.getElementById('projStep'+i).style.display=i===1?'block':'none';
+  document.getElementById('projSuccess').style.display='none';
+  document.getElementById('progressSteps').style.display='flex';
+  document.getElementById('btnStep1').disabled=true;
+  document.getElementById('projTitre').value='';
+  document.getElementById('projDesc').value='';
+  document.getElementById('projVille').value='';
+  document.getElementById('projCP').value='';
+  document.getElementById('projBudgetMin').value='';
+  document.getElementById('projBudgetMax').value='';
+  document.querySelectorAll('.cat-option').forEach(el=>el.classList.remove('selected'));
+  goStep(1);
+}
+
+// ===== PROFIL ARTISAN =====
+async function loadProfilArtisan() {
+  if(!currentUser) return;
+  // Charger profil complet depuis Supabase
+  const { data: profile } = await sb.from('profiles').select('*').eq('id', currentUser.id).single();
+  if(profile) {
+    document.getElementById('profPrenom').value = profile.prenom||'';
+    document.getElementById('profNom').value = profile.nom||'';
+    document.getElementById('profTel').value = profile.telephone||'';
+    document.getElementById('profVille').value = profile.ville||'';
+    document.getElementById('profDesc').value = profile.description||'';
+    document.getElementById('profExp').value = profile.experience||5;
+    document.getElementById('profRayon').value = profile.rayon||30;
+    document.getElementById('profTarif').value = profile.tarif_horaire||'';
+    document.getElementById('profSiret').value = profile.siret||'';
+    // Spécialités
+    const specs = profile.specialites || [];
+    document.querySelectorAll('#specSelector .spec-tag').forEach(el => {
+      if(specs.includes(el.textContent)) el.classList.add('selected');
+    });
+    updateDisplaySpecs();
+  } else {
+    document.getElementById('profPrenom').value = currentUser.prenom||'';
+    document.getElementById('profNom').value = currentUser.nom||'';
+  }
+  updateProfilPreview();
+}
+
+function updateProfilPreview() {
+  const p=document.getElementById('profPrenom').value;
+  const n=document.getElementById('profNom').value;
+  const v=document.getElementById('profVille').value;
+  document.getElementById('profilDisplayName').textContent=(p+' '+n).trim()||'Votre nom';
+  document.getElementById('profilDisplayLoc').textContent='📍 '+(v||'Votre ville');
+}
+function toggleSpec(el, spec) {
+  el.classList.toggle('selected');
+  updateDisplaySpecs();
+}
+function updateDisplaySpecs() {
+  const selected=[...document.querySelectorAll('#specSelector .spec-tag.selected')].map(el=>el.textContent);
+  document.getElementById('profilDisplaySpecs').innerHTML=selected.map(s=>`<span class="spec-tag">${s}</span>`).join('');
+}
+
+async function saveProfil() {
+  if(!currentUser) return;
+  const btn = document.querySelector('button[onclick="saveProfil()"]');
+  if(btn) { btn.textContent='⏳ Enregistrement…'; btn.disabled=true; }
+  const specialites = [...document.querySelectorAll('#specSelector .spec-tag.selected')].map(el=>el.textContent);
+  const profileData = {
+    id: currentUser.id,
+    prenom: document.getElementById('profPrenom').value.trim(),
+    nom: document.getElementById('profNom').value.trim(),
+    telephone: document.getElementById('profTel').value.trim(),
+    ville: document.getElementById('profVille').value.trim(),
+    description: document.getElementById('profDesc').value.trim(),
+    experience: parseInt(document.getElementById('profExp').value)||0,
+    rayon: parseInt(document.getElementById('profRayon').value)||30,
+    tarif_horaire: parseFloat(document.getElementById('profTarif').value)||null,
+    siret: document.getElementById('profSiret').value.trim(),
+    specialites,
+    role: 'artisan',
+    updated_at: new Date().toISOString(),
+  };
+  try {
+    const { error } = await sb.from('profiles').upsert(profileData);
+    if(error) throw error;
+    currentUser.prenom = profileData.prenom;
+    currentUser.nom = profileData.nom;
+    toast('Profil enregistré avec succès !', 'success');
+  } catch(e) {
+    toast('Erreur : ' + e.message, 'error');
+  } finally {
+    if(btn) { btn.textContent='💾 Enregistrer'; btn.disabled=false; }
+  }
+}
+
+// ===== UTILS =====
+function timeAgo(date) {
+  const d=new Date(date), now=new Date();
+  const diff=Math.floor((now-d)/1000);
+  if(diff<60) return "À l'instant";
+  if(diff<3600) return Math.floor(diff/60)+' min';
+  if(diff<86400) return Math.floor(diff/3600)+'h';
+  if(diff<604800) return Math.floor(diff/86400)+'j';
+  return d.toLocaleDateString('fr-FR');
+}
+
+// ===== TARIFS =====
+let periode = 'mensuel';
+function setPeriode(p) {
+  periode = p;
+  document.getElementById('toggleMensuel').className = 'price-toggle-btn' + (p==='mensuel'?' active':'');
+  document.getElementById('toggleAnnuel').className = 'price-toggle-btn' + (p==='annuel'?' active':'');
+  if(p==='mensuel') {
+    document.getElementById('starterPrice').textContent='29€';
+    document.getElementById('starterPeriod').textContent='/mois';
+    document.getElementById('starterNote').style.display='none';
+    document.getElementById('starterSaving').style.display='none';
+    document.getElementById('proPrice').textContent='49€';
+    document.getElementById('proPeriod').textContent='/mois';
+    document.getElementById('proNote').style.display='none';
+    document.getElementById('proSaving').style.display='none';
+  } else {
+    document.getElementById('starterPrice').textContent='220€';
+    document.getElementById('starterPeriod').textContent='/an';
+    document.getElementById('starterNote').style.display='block';
+    document.getElementById('starterSaving').style.display='inline-block';
+    document.getElementById('proPrice').textContent='390€';
+    document.getElementById('proPeriod').textContent='/an';
+    document.getElementById('proNote').style.display='block';
+    document.getElementById('proSaving').style.display='inline-block';
+  }
+}
+function toggleFaq(el) {
+  const ans = el.nextElementSibling;
+  ans.classList.toggle('open');
+  const arr = el.querySelector('span:last-child');
+  if(arr) arr.textContent = ans.classList.contains('open') ? '▲' : '▼';
+}
+
+// ===== REALTIME MESSAGING =====
+function subscribeToConv(convId) {
+  // Se désabonner de l'ancienne conversation si elle existe
+  if(_realtimeSub) {
+    sb.removeChannel(_realtimeSub);
+    _realtimeSub = null;
+  }
+  _realtimeSub = sb.channel('messages-' + convId)
+    .on('postgres_changes', {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'messages',
+      filter: `conversation_id=eq.${convId}`,
+    }, (payload) => {
+      const m = payload.new;
+      // Ne pas ajouter si c'est notre propre message (déjà affiché en optimistic)
+      if(m.sender_id === currentUser.id) return;
+      const bubbles = document.getElementById('msgBubbles');
+      if(!bubbles) return;
+      const time = new Date(m.created_at);
+      const timeStr = `${time.getHours()}h${String(time.getMinutes()).padStart(2,'0')}`;
+      const div = document.createElement('div');
+      div.innerHTML = `
+        <div class="msg-bubble-wrap">
+          <div class="msg-bubble other">${m.contenu}</div>
+        </div>
+        <div class="msg-time" style="text-align:left">${timeStr}</div>`;
+      bubbles.appendChild(div);
+      bubbles.scrollTop = bubbles.scrollHeight;
+    })
+    .subscribe();
+}
+
+// ===== INIT =====
+setupHomeScroll();
+
+// Fermer le menu mobile en cliquant à l'extérieur
+document.addEventListener('click', (e) => {
+  const navLinks = document.getElementById('navLinks');
+  const hamburger = document.querySelector('.hamburger');
+  if(navLinks && hamburger && !navLinks.contains(e.target) && !hamburger.contains(e.target)) {
+    navLinks.classList.remove('open');
+  }
+});
+
+// Vérifier session existante — restaurer et rediriger
+sb.auth.getSession().then(async ({ data: { session } }) => {
+  if(session) {
+    try {
+      const { data: profile } = await sb.from('profiles').select('*').eq('id', session.user.id).single();
+      currentUser = { ...session.user, ...profile };
+      currentRole = profile?.role || 'particulier';
+      updateNavUser();
+      // Si l'utilisateur était sur une page protégée, on le redirige
+      const page = document.querySelector('.page.active');
+      const pageId = page?.id || '';
+      if(!pageId || pageId === 'page-home' || pageId === 'page-auth') {
+        // rester sur la home, juste mettre à jour la nav
+      }
+    } catch(e) {
+      // session corrompue, on nettoie
+      await sb.auth.signOut();
+    }
+  }
+});
+
+// Écouter changements auth
+sb.auth.onAuthStateChange(async (event, session) => {
+  if(event === 'SIGNED_OUT') {
+    currentUser = null;
+    currentRole = 'particulier';
+    if(_realtimeSub) { sb.removeChannel(_realtimeSub); _realtimeSub = null; }
+  }
+});
+</script>
+</body>
+</html>
