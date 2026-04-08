@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MapLeads France</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f1117;--sidebar:#13151f;--card:#1e2130;--card2:#252840;
+  --accent:#6c63ff;--accent2:#8b83ff;--green:#22c55e;--red:#ef4444;
+  --amber:#f59e0b;--blue:#3b82f6;
+  --text:#e2e8f0;--muted:#64748b;--border:#2a2d3e;
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);display:flex;height:100vh;overflow:hidden}
+
+/* SIDEBAR */
+.sidebar{width:64px;background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;padding:16px 0;gap:8px;flex-shrink:0}
+.logo{width:40px;height:40px;background:var(--accent);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:16px;cursor:pointer}
+.nav-btn{width:44px;height:44px;border-radius:12px;border:none;background:transparent;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:20px;transition:all .2s;position:relative}
+.nav-btn:hover{background:var(--card);color:var(--text)}
+.nav-btn.active{background:var(--accent);color:#fff}
+.nav-btn title{display:none}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{height:56px;background:var(--sidebar);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:16px;flex-shrink:0}
+.topbar h1{font-size:16px;font-weight:700;color:var(--text);flex:1}
+.stat-badge{padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;background:var(--card)}
+.stat-badge.purple{color:var(--accent2);background:#1e1b3a}
+.stat-badge.green{color:var(--green);background:#0f2a1a}
+.stat-badge.amber{color:var(--amber);background:#2a1f0a}
+
+.content{flex:1;display:flex;overflow:hidden}
+.page{flex:1;overflow-y:auto;padding:24px;display:none}
+.page.active{display:block}
+
+/* CARDS & FORMS */
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:20px}
+.card h2{font-size:14px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:16px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-group label{font-size:12px;font-weight:500;color:var(--muted)}
+input,textarea,select{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-family:'Inter',sans-serif;font-size:14px;outline:none;transition:border .2s;width:100%}
+input:focus,textarea:focus,select:focus{border-color:var(--accent)}
+textarea{resize:vertical;min-height:80px}
+.range-wrap{display:flex;align-items:center;gap:10px}
+input[type=range]{padding:0;background:none;border:none;accent-color:var(--accent)}
+.range-val{font-size:13px;font-weight:600;color:var(--accent);min-width:30px}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:10px;border:none;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent2);transform:translateY(-1px)}
+.btn-sm{padding:6px 14px;font-size:12px;border-radius:8px}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}
+.btn-ghost:hover{color:var(--text);border-color:var(--muted)}
+.btn-green{background:#0f2a1a;color:var(--green);border:1px solid #1a4a2a}
+.btn-green:hover{background:#1a3a2a}
+.btn-red{background:#2a0f0f;color:var(--red);border:1px solid #4a1a1a}
+.btn-red:hover{background:#3a1515}
+
+/* TABLE */
+.table-wrap{overflow-x:auto;border-radius:12px;border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead tr{background:var(--card2);border-bottom:1px solid var(--border)}
+th{padding:12px 14px;text-align:left;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;white-space:nowrap}
+tbody tr{border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s}
+tbody tr:hover{background:var(--card2)}
+tbody tr:last-child{border-bottom:none}
+td{padding:12px 14px;vertical-align:middle}
+.stars{color:var(--amber);font-size:12px}
+.rating-bad{color:var(--red);font-weight:700}
+.rating-ok{color:var(--amber);font-weight:700}
+
+/* TAGS */
+.tag{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500;margin:2px}
+.tag-pain{background:#1e1b3a;color:var(--accent2);border:1px solid #2d2a5a;cursor:help;position:relative}
+.tag-pain[data-tip]:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#1a1d27;color:var(--text);border:1px solid var(--border);padding:6px 10px;border-radius:8px;white-space:nowrap;font-size:11px;z-index:100;max-width:280px;white-space:normal;min-width:120px}
+.status-new{background:#1a2a4a;color:var(--blue);border:1px solid #1e3a6a}
+.status-contacted{background:#2a1f0a;color:var(--amber);border:1px solid #4a3a1a}
+.status-won{background:#0f2a1a;color:var(--green);border:1px solid #1a4a2a}
+.status-lost{background:#2a0f0f;color:var(--red);border:1px solid #4a1a1a}
+
+/* SIDE PANEL */
+.panel{width:420px;background:var(--sidebar);border-left:1px solid var(--border);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s ease;flex-shrink:0}
+.panel.open{transform:translateX(0)}
+.panel-header{padding:20px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:12px}
+.panel-header .close{margin-left:auto;background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;padding:4px}
+.panel-header .close:hover{color:var(--text)}
+.panel-body{flex:1;overflow-y:auto;padding:20px}
+.panel-footer{padding:16px 20px;border-top:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap}
+.company-name{font-size:16px;font-weight:700}
+.company-meta{font-size:12px;color:var(--muted);margin-top:2px}
+.section-title{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin:16px 0 10px}
+.pain-item{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px}
+.pain-item .pain-title{font-size:13px;font-weight:600;color:var(--accent2);margin-bottom:4px}
+.pain-item .pain-freq{font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;float:right}
+.freq-haute{background:#2a0f0f;color:var(--red)}
+.freq-moyenne{background:#2a1f0a;color:var(--amber)}
+.freq-basse{background:#0f1f2a;color:var(--blue)}
+.pain-citation{font-size:12px;color:var(--muted);font-style:italic;margin-top:4px;padding:6px 8px;background:var(--card2);border-radius:6px;border-left:2px solid var(--accent)}
+
+/* SPINNER */
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-row td{text-align:center;padding:40px;color:var(--muted)}
+
+/* TOAST */
+.toasts{position:fixed;top:20px;right:20px;z-index:1000;display:flex;flex-direction:column;gap:8px}
+.toast{padding:12px 18px;border-radius:10px;font-size:13px;font-weight:500;animation:slideIn .3s ease;min-width:240px}
+.toast.success{background:#0f2a1a;color:var(--green);border:1px solid #1a4a2a}
+.toast.error{background:#2a0f0f;color:var(--red);border:1px solid #4a1a1a}
+.toast.info{background:#1e1b3a;color:var(--accent2);border:1px solid #2d2a5a}
+@keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+
+/* SETTINGS */
+.setup-step{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;display:flex;gap:14px;align-items:flex-start}
+.step-num{width:28px;height:28px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.step-content h3{font-size:14px;font-weight:600;margin-bottom:4px}
+.step-content p{font-size:13px;color:var(--muted);line-height:1.5}
+.code{background:var(--card2);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-family:monospace;font-size:12px;color:var(--accent2);margin-top:8px;display:block}
+
+/* EMPTY STATE */
+.empty{text-align:center;padding:60px 20px;color:var(--muted)}
+.empty .icon{font-size:48px;margin-bottom:16px;opacity:.4}
+.empty p{font-size:14px}
+
+/* FILTERS */
+.filters{display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
+.filter-btn{padding:6px 16px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:12px;font-weight:500;cursor:pointer;transition:all .2s}
+.filter-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.search-input{flex:1;max-width:280px;padding:8px 14px;background:var(--card);border:1px solid var(--border);border-radius:20px;color:var(--text);font-size:13px;outline:none}
+.search-input:focus{border-color:var(--accent)}
+
+/* NOTES */
+.notes-area{width:100%;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:10px;color:var(--text);font-size:13px;resize:vertical;min-height:70px;font-family:'Inter',sans-serif;outline:none}
+.notes-area:focus{border-color:var(--accent)}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="logo">🗺</div>
+  <button class="nav-btn active" onclick="showPage('finder')" title="Lead Finder">🔍</button>
+  <button class="nav-btn" onclick="showPage('crm')" title="CRM">📋</button>
+  <button class="nav-btn" onclick="showPage('settings')" title="Paramètres">⚙️</button>
+</nav>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <h1>MapLeads <span style="color:var(--accent)">France</span></h1>
+    <span class="stat-badge purple" id="stat-total">0 leads</span>
+    <span class="stat-badge green" id="stat-won">0 gagnés</span>
+    <span class="stat-badge amber" id="stat-contact">0 contactés</span>
+  </div>
+
+  <div class="content">
+
+    <!-- PAGE: LEAD FINDER -->
+    <div class="page active" id="page-finder">
+      <div class="card">
+        <h2>🔍 Recherche d'entreprises</h2>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Secteur / Type d'entreprise</label>
+            <input id="q-query" type="text" placeholder="ex: restaurant, plombier, salon de coiffure…" />
+          </div>
+          <div class="form-group">
+            <label>Ville / Région</label>
+            <input id="q-city" type="text" placeholder="ex: Paris, Lyon, Marseille…" />
+          </div>
+          <div class="form-group">
+            <label>Note max Google Maps</label>
+            <div class="range-wrap">
+              <input id="q-rating" type="range" min="1" max="5" step="0.5" value="3.5" oninput="document.getElementById('rval').textContent=this.value">
+              <span class="range-val" id="rval">3.5</span><span style="color:var(--muted);font-size:12px">★</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Nombre d'avis minimum</label>
+            <input id="q-minrev" type="number" value="10" min="1" />
+          </div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:10px;align-items:flex-end">
+          <button class="btn btn-primary" onclick="doSearch()" id="btn-search">
+            <span>🔍</span> Rechercher
+          </button>
+          <span id="search-status" style="font-size:13px;color:var(--muted)"></span>
+        </div>
+      </div>
+
+      <!-- RESULTS -->
+      <div id="results-section" style="display:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <span id="results-count" style="font-size:14px;color:var(--muted)"></span>
+          <button class="btn btn-sm btn-ghost" onclick="analyzeAll()" id="btn-analyze-all">⚡ Tout analyser</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Entreprise</th>
+                <th>Ville</th>
+                <th>CP</th>
+                <th>Note</th>
+                <th>Avis</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="results-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: CRM -->
+    <div class="page" id="page-crm">
+      <div class="filters">
+        <input class="search-input" type="text" placeholder="🔍 Rechercher…" oninput="filterLeads()" id="crm-search" />
+        <button class="filter-btn active" onclick="setStatusFilter('all',this)">Tous</button>
+        <button class="filter-btn" onclick="setStatusFilter('new',this)">Nouveau</button>
+        <button class="filter-btn" onclick="setStatusFilter('contacted',this)">Contacté</button>
+        <button class="filter-btn" onclick="setStatusFilter('won',this)">Gagné</button>
+        <button class="filter-btn" onclick="setStatusFilter('lost',this)">Perdu</button>
+        <button class="btn btn-sm btn-ghost" onclick="loadLeads()" style="margin-left:auto">↻ Rafraîchir</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Entreprise</th>
+              <th>CP</th>
+              <th>Ville</th>
+              <th>Téléphone</th>
+              <th>Note</th>
+              <th>Secteur</th>
+              <th>Pain Points</th>
+              <th>Statut</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="crm-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PAGE: SETTINGS -->
+    <div class="page" id="page-settings">
+      <div class="card">
+        <h2>⚙️ Configuration</h2>
+        <div class="setup-step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h3>Clé Google Places API</h3>
+            <p>Va sur <strong>console.cloud.google.com</strong> → Active <em>Places API</em> → Crée une clé API.</p>
+            <code class="code">GOOGLE_PLACES_API_KEY=AIzaSy-xxxxxxxxxxxxx</code>
+          </div>
+        </div>
+        <div class="setup-step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h3>Clé Anthropic (Claude AI)</h3>
+            <p>Va sur <strong>console.anthropic.com</strong> → API Keys → Crée une clé.</p>
+            <code class="code">ANTHROPIC_API_KEY=sk-ant-xxxxxxxxxxxxx</code>
+          </div>
+        </div>
+        <div class="setup-step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h3>Config SMTP (envoi d'emails)</h3>
+            <p>Pour Gmail : active <em>Mots de passe d'application</em> dans ton compte Google.</p>
+            <code class="code">SMTP_HOST=smtp.gmail.com<br>SMTP_PORT=587<br>SMTP_USER=ton@gmail.com<br>SMTP_PASS=xxxx xxxx xxxx xxxx</code>
+          </div>
+        </div>
+        <div class="setup-step">
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <h3>Lancer le serveur</h3>
+            <p>Copie <code style="background:var(--card2);padding:2px 6px;border-radius:4px;font-size:12px">.env.example</code> en <code style="background:var(--card2);padding:2px 6px;border-radius:4px;font-size:12px">.env</code>, remplis tes clés, puis :</p>
+            <code class="code">cd mapleads && npm install && npm start</code>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- content -->
+</div><!-- main -->
+
+<!-- SIDE PANEL (shared) -->
+<div class="panel" id="side-panel">
+  <div class="panel-header">
+    <div>
+      <div class="company-name" id="panel-name">—</div>
+      <div class="company-meta" id="panel-meta">—</div>
+    </div>
+    <button class="close" onclick="closePanel()">✕</button>
+  </div>
+  <div class="panel-body" id="panel-body"></div>
+  <div class="panel-footer" id="panel-footer"></div>
+</div>
+
+<!-- TOASTS -->
+<div class="toasts" id="toasts"></div>
+
+<script>
+// ── STATE ──────────────────────────────────────────────────────────────────────
+let searchResults = [];
+let currentLead = null;
+let statusFilter = 'all';
+let offer = '';
+
+// ── NAV ───────────────────────────────────────────────────────────────────────
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  const idx = {finder:0, crm:1, settings:2}[id];
+  document.querySelectorAll('.nav-btn')[idx].classList.add('active');
+  if (id === 'crm') loadLeads();
+  if (id === 'crm' || id === 'finder') loadStats();
+  closePanel();
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────────────
+function toast(msg, type='info') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+// ── STATS ─────────────────────────────────────────────────────────────────────
+async function loadStats() {
+  try {
+    const s = await api('GET', '/api/stats');
+    document.getElementById('stat-total').textContent = s.total + ' leads';
+    const won = (s.byStatus.find(x=>x.status==='won')||{n:0}).n;
+    const cont = (s.byStatus.find(x=>x.status==='contacted')||{n:0}).n;
+    document.getElementById('stat-won').textContent = won + ' gagnés';
+    document.getElementById('stat-contact').textContent = cont + ' contactés';
+  } catch(e) {}
+}
+
+// ── API HELPER ────────────────────────────────────────────────────────────────
+async function api(method, url, body) {
+  const opts = { method, headers: {'Content-Type':'application/json'} };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(url, opts);
+  const data = await r.json();
+  if (!r.ok) throw new Error(data.error || 'Erreur serveur');
+  return data;
+}
+
+// ── SEARCH ────────────────────────────────────────────────────────────────────
+async function doSearch() {
+  const query = document.getElementById('q-query').value.trim();
+  const city = document.getElementById('q-city').value.trim();
+  if (!query) { toast('Saisis un secteur d\'activité', 'error'); return; }
+
+  const btn = document.getElementById('btn-search');
+  btn.innerHTML = '<span class="spinner"></span> Recherche…';
+  btn.disabled = true;
+  document.getElementById('search-status').textContent = '';
+  document.getElementById('results-section').style.display = 'none';
+
+  try {
+    const data = await api('POST', '/api/search', {
+      query, city,
+      maxRating: parseFloat(document.getElementById('q-rating').value),
+      minReviews: parseInt(document.getElementById('q-minrev').value)
+    });
+    searchResults = data.results || [];
+    renderResults();
+    document.getElementById('results-count').textContent = `${searchResults.length} entreprises trouvées`;
+    document.getElementById('results-section').style.display = 'block';
+    if (searchResults.length === 0) toast('Aucun résultat pour ces critères', 'info');
+  } catch(e) {
+    toast(e.message, 'error');
+  } finally {
+    btn.innerHTML = '<span>🔍</span> Rechercher';
+    btn.disabled = false;
+  }
+}
+
+function renderResults() {
+  const tbody = document.getElementById('results-tbody');
+  if (searchResults.length === 0) {
+    tbody.innerHTML = '<tr class="loading-row"><td colspan="6">Aucun résultat</td></tr>';
+    return;
+  }
+  tbody.innerHTML = searchResults.map((r, i) => `
+    <tr>
+      <td><strong>${esc(r.name)}</strong></td>
+      <td>${esc(r.city || '—')}</td>
+      <td>${esc(r.postal_code || '—')}</td>
+      <td class="${r.rating <= 2.5 ? 'rating-bad' : 'rating-ok'}">${r.rating}★</td>
+      <td>${r.total_ratings}</td>
+      <td>
+        <button class="btn btn-sm btn-primary" id="abtn-${i}" onclick="analyzeOne(${i})">
+          🔬 Analyser
+        </button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function analyzeOne(idx) {
+  const place = searchResults[idx];
+  const btn = document.getElementById('abtn-' + idx);
+  btn.innerHTML = '<span class="spinner"></span>';
+  btn.disabled = true;
+
+  try {
+    const data = await api('POST', '/api/analyze', { placeId: place.place_id, offer: '' });
+    showAnalysisPanel(data);
+    loadStats();
+    toast('Analyse terminée — ' + place.name, 'success');
+  } catch(e) {
+    toast('Erreur: ' + e.message, 'error');
+  } finally {
+    btn.innerHTML = '✅ Analysé';
+  }
+}
+
+async function analyzeAll() {
+  const btn = document.getElementById('btn-analyze-all');
+  btn.disabled = true;
+  let done = 0;
+  for (let i = 0; i < searchResults.length; i++) {
+    btn.textContent = `⚡ ${done}/${searchResults.length}…`;
+    const abtn = document.getElementById('abtn-' + i);
+    if (abtn && !abtn.textContent.includes('Analysé')) {
+      await analyzeOne(i);
+      done++;
+      await new Promise(r => setTimeout(r, 500));
+    }
+  }
+  btn.textContent = '✅ Tout analysé';
+  loadStats();
+}
+
+// ── PANEL — ANALYSIS ──────────────────────────────────────────────────────────
+function showAnalysisPanel(data) {
+  const { place, analysis } = data;
+  document.getElementById('panel-name').textContent = place.name;
+  document.getElementById('panel-meta').innerHTML =
+    `<span class="${place.rating <= 2.5 ? 'rating-bad' : 'rating-ok'}">${place.rating}★</span> · ${place.user_ratings_total} avis · ${place.formatted_address || ''}`;
+
+  const pains = analysis.painPoints || [];
+  let html = '';
+
+  if (pains.length > 0) {
+    html += `<div class="section-title">🎯 Pain Points détectés</div>`;
+    html += `<div style="margin-bottom:4px;font-size:12px;color:var(--muted)">Secteur : <strong style="color:var(--text)">${esc(analysis.sector||'—')}</strong></div>`;
+    html += `<div style="margin-bottom:12px;font-size:13px;color:var(--accent2)">⚡ ${esc(analysis.mainPain||'')}</div>`;
+    pains.forEach(p => {
+      const freq = p.frequency || 'moyenne';
+      html += `<div class="pain-item">
+        <span class="pain-freq freq-${freq}">${freq}</span>
+        <div class="pain-title">${esc(p.point)}</div>
+        ${p.citation ? `<div class="pain-citation">"${esc(p.citation)}"</div>` : ''}
+      </div>`;
+    });
+  } else {
+    html += `<div class="empty"><div class="icon">🔎</div><p>Pas assez d'avis analysables</p></div>`;
+  }
+
+  document.getElementById('panel-body').innerHTML = html;
+  document.getElementById('panel-footer').innerHTML = `
+    <button class="btn btn-sm btn-green" onclick="goToCRM()">📋 Voir dans le CRM</button>
+  `;
+  openPanel();
+}
+
+// ── CRM ───────────────────────────────────────────────────────────────────────
+async function loadLeads() {
+  const search = document.getElementById('crm-search')?.value || '';
+  const tbody = document.getElementById('crm-tbody');
+  tbody.innerHTML = '<tr class="loading-row"><td colspan="9"><span class="spinner"></span> Chargement…</td></tr>';
+
+  try {
+    const leads = await api('GET', `/api/leads?status=${statusFilter}&search=${encodeURIComponent(search)}`);
+    renderLeads(leads);
+  } catch(e) {
+    toast(e.message, 'error');
+    tbody.innerHTML = '';
+  }
+}
+
+function filterLeads() { loadLeads(); }
+
+function setStatusFilter(s, btn) {
+  statusFilter = s;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  loadLeads();
+}
+
+function renderLeads(leads) {
+  const tbody = document.getElementById('crm-tbody');
+  if (leads.length === 0) {
+    tbody.innerHTML = `<tr class="loading-row"><td colspan="9">
+      <div class="empty"><div class="icon">📭</div><p>Aucun lead ici. Lance une recherche d'abord.</p></div>
+    </td></tr>`;
+    return;
+  }
+  tbody.innerHTML = leads.map(l => {
+    const pains = Array.isArray(l.pain_points) ? l.pain_points : [];
+    const painTags = pains.slice(0,3).map(p =>
+      `<span class="tag tag-pain" data-tip="${esc(p.citation||p.point)}">${esc(p.point?.substring(0,28))}…</span>`
+    ).join('');
+    return `<tr onclick="openLeadPanel(${l.id})">
+      <td><strong>${esc(l.name)}</strong></td>
+      <td>${esc(l.postal_code||'—')}</td>
+      <td>${esc(l.city||'—')}</td>
+      <td>${esc(l.phone||'—')}</td>
+      <td class="${l.rating<=2.5?'rating-bad':'rating-ok'}">${l.rating}★</td>
+      <td><span style="color:var(--muted);font-size:12px">${esc(l.sector||'—')}</span></td>
+      <td>${painTags || '<span style="color:var(--muted);font-size:12px">—</span>'}</td>
+      <td><span class="tag status-${l.status}">${statusLabel(l.status)}</span></td>
+      <td><button class="btn btn-sm btn-red" onclick="event.stopPropagation();deleteLead(${l.id})">🗑</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function statusLabel(s) {
+  return {new:'Nouveau',contacted:'Contacté',won:'Gagné',lost:'Perdu'}[s] || s;
+}
+
+async function openLeadPanel(id) {
+  try {
+    const lead = await api('GET', '/api/leads/' + id);
+    currentLead = lead;
+    document.getElementById('panel-name').textContent = lead.name;
+    document.getElementById('panel-meta').innerHTML =
+      `<span class="${lead.rating<=2.5?'rating-bad':'rating-ok'}">${lead.rating}★</span> · ${lead.total_ratings} avis · ${esc(lead.city||'')}`;
+
+    const pains = Array.isArray(lead.pain_points) ? lead.pain_points : [];
+    let html = `
+      <div class="form-group" style="margin-bottom:12px">
+        <label>Statut</label>
+        <select onchange="updateLeadStatus(${id},this.value)">
+          <option value="new" ${lead.status==='new'?'selected':''}>Nouveau</option>
+          <option value="contacted" ${lead.status==='contacted'?'selected':''}>Contacté</option>
+          <option value="won" ${lead.status==='won'?'selected':''}>Gagné</option>
+          <option value="lost" ${lead.status==='lost'?'selected':''}>Perdu</option>
+        </select>
+      </div>
+    `;
+
+    if (lead.phone) html += `<div style="margin-bottom:8px;font-size:13px">📞 <strong>${esc(lead.phone)}</strong></div>`;
+    if (lead.website) html += `<div style="margin-bottom:12px;font-size:13px">🌐 <a href="${esc(lead.website)}" target="_blank" style="color:var(--accent2)">${esc(lead.website)}</a></div>`;
+
+    if (pains.length > 0) {
+      html += `<div class="section-title">🎯 Pain Points</div>`;
+      pains.forEach(p => {
+        const freq = p.frequency || 'moyenne';
+        html += `<div class="pain-item">
+          <span class="pain-freq freq-${freq}">${freq}</span>
+          <div class="pain-title">${esc(p.point)}</div>
+          ${p.citation ? `<div class="pain-citation">"${esc(p.citation)}"</div>` : ''}
+        </div>`;
+      });
+    }
+
+    html += `<div class="section-title" style="margin-top:16px">📝 Notes</div>`;
+    html += `<textarea class="notes-area" id="lead-notes" placeholder="Tes notes sur ce prospect…">${esc(lead.notes||'')}</textarea>`;
+
+    html += `<div class="form-group" style="margin-top:12px">
+      <label>Email du contact</label>
+      <input type="email" id="lead-email" value="${esc(lead.contact_email||'')}" placeholder="contact@entreprise.fr" />
+    </div>`;
+
+    document.getElementById('panel-body').innerHTML = html;
+    document.getElementById('panel-footer').innerHTML = `
+      <button class="btn btn-sm btn-primary" onclick="saveLeadNotes(${id})">💾 Sauvegarder</button>
+      <button class="btn btn-sm btn-ghost" onclick="deleteLead(${id})">🗑 Supprimer</button>
+    `;
+    openPanel();
+  } catch(e) {
+    toast(e.message, 'error');
+  }
+}
+
+async function updateLeadStatus(id, status) {
+  try {
+    await api('PATCH', '/api/leads/' + id, { status });
+    toast('Statut mis à jour', 'success');
+    loadStats();
+  } catch(e) { toast(e.message,'error'); }
+}
+
+async function saveLeadNotes(id) {
+  const notes = document.getElementById('lead-notes').value;
+  const contact_email = document.getElementById('lead-email').value;
+  try {
+    await api('PATCH', '/api/leads/' + id, { notes, contact_email });
+    toast('Sauvegardé', 'success');
+  } catch(e) { toast(e.message,'error'); }
+}
+
+async function deleteLead(id) {
+  if (!confirm('Supprimer ce lead ?')) return;
+  try {
+    await api('DELETE', '/api/leads/' + id);
+    toast('Lead supprimé', 'success');
+    closePanel();
+    loadLeads();
+    loadStats();
+  } catch(e) { toast(e.message,'error'); }
+}
+
+// ── PANEL HELPERS ─────────────────────────────────────────────────────────────
+function openPanel() { document.getElementById('side-panel').classList.add('open'); }
+function closePanel() { document.getElementById('side-panel').classList.remove('open'); }
+function goToCRM() { showPage('crm'); }
+
+// ── UTILS ─────────────────────────────────────────────────────────────────────
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+loadStats();
+</script>
+</body>
+</html>
