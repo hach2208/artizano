@@ -1,10 +1,10 @@
 require('dotenv').config();
 const express = require('express');
-const Database = require('better-sqlite3');
 const Anthropic = require('@anthropic-ai/sdk');
 const fetch = require('node-fetch');
 const nodemailer = require('nodemailer');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -12,39 +12,101 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ─── DATABASE ──────────────────────────────────────────────────────────────────
-const db = new Database(path.join(__dirname, 'mapleads.db'));
+// ─── JSON DATABASE (remplace SQLite — compatible toutes versions Node) ─────────
+class JsonDB {
+  constructor(file) {
+    this.file = file;
+    this._data = { leads: [], settings: {}, next_id: 1 };
+    this._load();
+  }
 
-db.exec(`
-  CREATE TABLE IF NOT EXISTS leads (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    place_id TEXT UNIQUE,
-    name TEXT,
-    address TEXT,
-    city TEXT,
-    postal_code TEXT,
-    phone TEXT,
-    website TEXT,
-    contact_email TEXT,
-    rating REAL,
-    total_ratings INTEGER,
-    sector TEXT,
-    pain_points TEXT,
-    subject TEXT,
-    generated_email TEXT,
-    status TEXT DEFAULT 'new',
-    notes TEXT,
-    lat REAL,
-    lng REAL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
+  _load() {
+    try {
+      if (fs.existsSync(this.file)) {
+        this._data = JSON.parse(fs.readFileSync(this.file, 'utf8'));
+      } else {
+        this._save();
+      }
+    } catch (e) {
+      console.warn('DB load error, starting fresh:', e.message);
+      this._save();
+    }
+  }
 
-  CREATE TABLE IF NOT EXISTS settings (
-    key TEXT PRIMARY KEY,
-    value TEXT
-  );
-`);
+  _save() {
+    fs.writeFileSync(this.file, JSON.stringify(this._data, null, 2));
+  }
+
+  now() { return new Date().toISOString(); }
+
+  // ── LEADS ──
+  insertOrReplaceLead(lead) {
+    const existing = this._data.leads.findIndex(l => l.place_id === lead.place_id);
+    if (existing >= 0) {
+      this._data.leads[existing] = { ...this._data.leads[existing], ...lead, updated_at: this.now() };
+    } else {
+      const id = this._data.next_id++;
+      this._data.leads.push({ id, status: 'new', notes: '', contact_email: '', created_at: this.now(), updated_at: this.now(), ...lead });
+    }
+    this._save();
+  }
+
+  getLead(id) {
+    return this._data.leads.find(l => l.id === parseInt(id)) || null;
+  }
+
+  getLeads({ status, search } = {}) {
+    let leads = [...this._data.leads];
+    if (status && status !== 'all') leads = leads.filter(l => l.status === status);
+    if (search) {
+      const s = search.toLowerCase();
+      leads = leads.filter(l =>
+        (l.name || '').toLowerCase().includes(s) ||
+        (l.city || '').toLowerCase().includes(s) ||
+        (l.sector || '').toLowerCase().includes(s)
+      );
+    }
+    return leads.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  }
+
+  updateLead(id, fields) {
+    const idx = this._data.leads.findIndex(l => l.id === parseInt(id));
+    if (idx < 0) return false;
+    this._data.leads[idx] = { ...this._data.leads[idx], ...fields, updated_at: this.now() };
+    this._save();
+    return true;
+  }
+
+  deleteLead(id) {
+    const before = this._data.leads.length;
+    this._data.leads = this._data.leads.filter(l => l.id !== parseInt(id));
+    this._save();
+    return this._data.leads.length < before;
+  }
+
+  getStats() {
+    const leads = this._data.leads;
+    const byStatus = {};
+    leads.forEach(l => { byStatus[l.status] = (byStatus[l.status] || 0) + 1; });
+    const ratings = leads.filter(l => l.rating).map(l => l.rating);
+    const avgRating = ratings.length ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1) : 0;
+    return {
+      total: leads.length,
+      byStatus: Object.entries(byStatus).map(([status, n]) => ({ status, n })),
+      avgRating
+    };
+  }
+
+  // ── SETTINGS ──
+  getSettings() { return { ...this._data.settings }; }
+
+  setSettings(obj) {
+    Object.assign(this._data.settings, obj);
+    this._save();
+  }
+}
+
+const db = new JsonDB(path.join(__dirname, 'mapleads.json'));
 
 // ─── CLIENTS ──────────────────────────────────────────────────────────────────
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -63,8 +125,7 @@ function extractCity(address) {
   if (!address) return '';
   const parts = address.split(',');
   if (parts.length >= 2) {
-    const cityPart = parts[parts.length - 2].trim();
-    return cityPart.replace(/^\d{5}\s*/, '').trim();
+    return parts[parts.length - 2].trim().replace(/^\d{5}\s*/, '').trim();
   }
   return '';
 }
@@ -84,8 +145,7 @@ async function searchPlaces(query, pageToken = null) {
 async function getPlaceDetails(placeId) {
   const fields = [
     'place_id', 'name', 'formatted_address', 'formatted_phone_number',
-    'website', 'rating', 'user_ratings_total', 'reviews',
-    'geometry', 'business_status', 'types'
+    'website', 'rating', 'user_ratings_total', 'reviews', 'geometry', 'business_status', 'types'
   ].join(',');
   const url = `${PLACES}/details/json?place_id=${placeId}&fields=${fields}&language=fr&key=${GOOGLE_KEY}`;
   return googleFetch(url);
@@ -95,7 +155,6 @@ async function getPlaceDetails(placeId) {
 app.post('/api/search', async (req, res) => {
   try {
     const { query, city, maxRating = 3.5, minReviews = 10, maxPages = 3 } = req.body;
-
     if (!GOOGLE_KEY) return res.status(400).json({ error: 'GOOGLE_PLACES_API_KEY manquante dans .env' });
 
     const searchQuery = city ? `${query} ${city} France` : `${query} France`;
@@ -105,18 +164,11 @@ app.post('/api/search', async (req, res) => {
 
     do {
       const data = await searchPlaces(searchQuery, pageToken);
-
-      if (data.status === 'REQUEST_DENIED') {
-        return res.status(400).json({ error: 'Clé Google Places invalide', detail: data.error_message });
-      }
-      if (data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
-        return res.status(400).json({ error: data.status, detail: data.error_message });
-      }
+      if (data.status === 'REQUEST_DENIED') return res.status(400).json({ error: 'Clé Google Places invalide', detail: data.error_message });
+      if (data.status !== 'OK' && data.status !== 'ZERO_RESULTS') return res.status(400).json({ error: data.status, detail: data.error_message });
 
       const filtered = (data.results || []).filter(p =>
-        typeof p.rating === 'number' &&
-        p.rating <= maxRating &&
-        (p.user_ratings_total || 0) >= minReviews
+        typeof p.rating === 'number' && p.rating <= maxRating && (p.user_ratings_total || 0) >= minReviews
       ).map(p => ({
         place_id: p.place_id,
         name: p.name,
@@ -131,7 +183,6 @@ app.post('/api/search', async (req, res) => {
       results.push(...filtered);
       pageToken = data.next_page_token;
       pages++;
-
       if (pageToken && pages < maxPages) await sleep(2200);
     } while (pageToken && pages < maxPages);
 
@@ -146,49 +197,27 @@ app.post('/api/search', async (req, res) => {
 app.post('/api/analyze', async (req, res) => {
   try {
     const { placeId, offer } = req.body;
-
     if (!GOOGLE_KEY) return res.status(400).json({ error: 'GOOGLE_PLACES_API_KEY manquante' });
     if (!process.env.ANTHROPIC_API_KEY) return res.status(400).json({ error: 'ANTHROPIC_API_KEY manquante' });
 
-    // Fetch from Google
     const details = await getPlaceDetails(placeId);
-    if (details.status !== 'OK') {
-      return res.status(400).json({ error: `Google: ${details.status}`, detail: details.error_message });
-    }
+    if (details.status !== 'OK') return res.status(400).json({ error: `Google: ${details.status}`, detail: details.error_message });
 
     const place = details.result;
     const reviews = (place.reviews || []).filter(r => r.text && r.text.length > 20);
-
     const address = place.formatted_address || '';
     const postal = extractPostalCode(address);
     const city = extractCity(address);
 
     if (reviews.length === 0) {
-      // Save without analysis
-      db.prepare(`INSERT OR REPLACE INTO leads
-        (place_id, name, address, city, postal_code, phone, website, rating, total_ratings, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'new')
-      `).run(
-        place.place_id, place.name, address, city, postal,
-        place.formatted_phone_number || '',
-        place.website || '',
-        place.rating, place.user_ratings_total
-      );
-      return res.json({
-        place: { ...place, postal_code: postal, city },
-        analysis: { painPoints: [], mainPain: 'Avis insuffisants', email: '', emailSubject: '' },
-        reviews: []
-      });
+      db.insertOrReplaceLead({ place_id: place.place_id, name: place.name, address, city, postal_code: postal, phone: place.formatted_phone_number || '', website: place.website || '', rating: place.rating, total_ratings: place.user_ratings_total, pain_points: [] });
+      return res.json({ place: { ...place, postal_code: postal, city }, analysis: { painPoints: [], mainPain: 'Avis insuffisants', email: '', emailSubject: '' }, reviews: [] });
     }
 
-    // Build review text
     const reviewsText = reviews.map((r, i) =>
       `[Avis ${i + 1} — ${r.rating}★ — ${r.relative_time_description}]\n"${r.text}"`
     ).join('\n\n');
 
-    const offerText = offer || '(offre non précisée)';
-
-    // Claude analysis
     const message = await anthropic.messages.create({
       model: 'claude-opus-4-6',
       max_tokens: 2048,
@@ -200,14 +229,14 @@ Voici les avis Google de l'entreprise "${place.name}" (${place.rating}/5 — ${p
 
 ${reviewsText}
 
-Mon offre : ${offerText}
+Mon offre : ${offer || '(offre non précisée)'}
 
 MISSION :
 1. Identifie les 3 à 5 douleurs les plus récurrentes et concrètes. Cite des phrases réelles des avis.
 2. Croise chaque douleur avec mon offre.
 3. Rédige un cold email B2B en français, 130-150 mots, ton professionnel mais chaleureux.
    - Ne mentionne JAMAIS les avis Google ou que tu as "lu des avis"
-   - Adresse les douleurs de façon naturelle (comme si tu l'avais constaté autrement)
+   - Adresse les douleurs de façon naturelle
    - CTA clair : proposer un appel de 15 min
    - Termine par : "Si vous ne souhaitez plus recevoir d'emails, répondez simplement STOP."
 
@@ -228,36 +257,21 @@ Réponds UNIQUEMENT en JSON valide, sans markdown, sans texte avant/après :
 
     let analysis;
     try {
-      const raw = message.content[0].text.trim();
-      const jsonStr = raw.replace(/^```json\s*/i, '').replace(/```$/,'').trim();
-      analysis = JSON.parse(jsonStr);
+      const raw = message.content[0].text.trim().replace(/^```json\s*/i, '').replace(/```$/, '').trim();
+      analysis = JSON.parse(raw);
     } catch (parseErr) {
       console.error('JSON parse error:', message.content[0].text);
       return res.status(500).json({ error: 'Réponse Claude invalide', raw: message.content[0].text });
     }
 
-    // Save to DB
-    db.prepare(`INSERT OR REPLACE INTO leads
-      (place_id, name, address, city, postal_code, phone, website, rating, total_ratings,
-       sector, pain_points, subject, generated_email, lat, lng, status)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'new')
-    `).run(
-      place.place_id,
-      place.name,
-      address,
-      city,
-      postal,
-      place.formatted_phone_number || '',
-      place.website || '',
-      place.rating,
-      place.user_ratings_total,
-      analysis.sector || '',
-      JSON.stringify(analysis.painPoints || []),
-      analysis.emailSubject || '',
-      analysis.email || '',
-      place.geometry?.location?.lat || null,
-      place.geometry?.location?.lng || null
-    );
+    db.insertOrReplaceLead({
+      place_id: place.place_id, name: place.name, address, city, postal_code: postal,
+      phone: place.formatted_phone_number || '', website: place.website || '',
+      rating: place.rating, total_ratings: place.user_ratings_total,
+      sector: analysis.sector || '', pain_points: analysis.painPoints || [],
+      subject: analysis.emailSubject || '', generated_email: analysis.email || '',
+      lat: place.geometry?.location?.lat || null, lng: place.geometry?.location?.lng || null
+    });
 
     res.json({ place: { ...place, postal_code: postal, city }, analysis, reviews });
   } catch (err) {
@@ -270,14 +284,13 @@ Réponds UNIQUEMENT en JSON valide, sans markdown, sans texte avant/après :
 app.post('/api/regenerate-email', async (req, res) => {
   try {
     const { leadId, companyName, painPoints, offer } = req.body;
-
     const message = await anthropic.messages.create({
       model: 'claude-opus-4-6',
       max_tokens: 800,
       messages: [{
         role: 'user',
         content: `Rédige un nouveau cold email B2B pour "${companyName}".
-Douleurs : ${painPoints.map(p => p.point || p).join(' / ')}
+Douleurs : ${(painPoints || []).map(p => p.point || p).join(' / ')}
 Mon offre : ${offer || '(à préciser)'}
 
 Règles : 130-150 mots, professionnel et chaleureux, ne mentionne PAS les avis Google, CTA = appel 15 min, termine par "Si vous ne souhaitez plus recevoir d'emails, répondez simplement STOP."
@@ -287,14 +300,10 @@ Réponds en JSON valide uniquement :
       }]
     });
 
-    const raw = message.content[0].text.trim().replace(/^```json\s*/i,'').replace(/```$/,'').trim();
+    const raw = message.content[0].text.trim().replace(/^```json\s*/i, '').replace(/```$/, '').trim();
     const result = JSON.parse(raw);
 
-    if (leadId) {
-      db.prepare('UPDATE leads SET subject=?, generated_email=?, updated_at=CURRENT_TIMESTAMP WHERE id=?')
-        .run(result.subject, result.email, leadId);
-    }
-
+    if (leadId) db.updateLead(leadId, { subject: result.subject, generated_email: result.email });
     res.json(result);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -303,99 +312,46 @@ Réponds en JSON valide uniquement :
 
 // ─── ROUTES — CRM ─────────────────────────────────────────────────────────────
 app.get('/api/leads', (req, res) => {
-  const { status, search } = req.query;
-  const conditions = [];
-  const params = [];
-
-  if (status && status !== 'all') { conditions.push('status = ?'); params.push(status); }
-  if (search) {
-    conditions.push('(name LIKE ? OR city LIKE ? OR sector LIKE ?)');
-    params.push(`%${search}%`, `%${search}%`, `%${search}%`);
-  }
-
-  let q = 'SELECT * FROM leads';
-  if (conditions.length) q += ' WHERE ' + conditions.join(' AND ');
-  q += ' ORDER BY created_at DESC';
-
-  const leads = db.prepare(q).all(...params);
-  leads.forEach(l => {
-    if (l.pain_points) {
-      try { l.pain_points = JSON.parse(l.pain_points); }
-      catch { l.pain_points = []; }
-    }
-  });
-  res.json(leads);
+  res.json(db.getLeads({ status: req.query.status, search: req.query.search }));
 });
 
 app.get('/api/leads/:id', (req, res) => {
-  const lead = db.prepare('SELECT * FROM leads WHERE id = ?').get(req.params.id);
+  const lead = db.getLead(req.params.id);
   if (!lead) return res.status(404).json({ error: 'Lead introuvable' });
-  if (lead.pain_points) {
-    try { lead.pain_points = JSON.parse(lead.pain_points); } catch { lead.pain_points = []; }
-  }
   res.json(lead);
 });
 
 app.patch('/api/leads/:id', (req, res) => {
   const { status, notes, contact_email } = req.body;
-  const updates = ['updated_at = CURRENT_TIMESTAMP'];
-  const params = [];
-
-  if (status !== undefined) { updates.push('status = ?'); params.push(status); }
-  if (notes !== undefined) { updates.push('notes = ?'); params.push(notes); }
-  if (contact_email !== undefined) { updates.push('contact_email = ?'); params.push(contact_email); }
-
-  params.push(req.params.id);
-  db.prepare(`UPDATE leads SET ${updates.join(', ')} WHERE id = ?`).run(...params);
+  const fields = {};
+  if (status !== undefined) fields.status = status;
+  if (notes !== undefined) fields.notes = notes;
+  if (contact_email !== undefined) fields.contact_email = contact_email;
+  db.updateLead(req.params.id, fields);
   res.json({ success: true });
 });
 
 app.delete('/api/leads/:id', (req, res) => {
-  db.prepare('DELETE FROM leads WHERE id = ?').run(req.params.id);
+  db.deleteLead(req.params.id);
   res.json({ success: true });
 });
 
-app.get('/api/stats', (req, res) => {
-  const total = db.prepare('SELECT COUNT(*) as n FROM leads').get().n;
-  const byStatus = db.prepare('SELECT status, COUNT(*) as n FROM leads GROUP BY status').all();
-  const avgRating = db.prepare('SELECT AVG(rating) as avg FROM leads').get().avg;
-  res.json({ total, byStatus, avgRating: avgRating ? avgRating.toFixed(1) : 0 });
-});
+app.get('/api/stats', (req, res) => res.json(db.getStats()));
 
 // ─── ROUTES — EMAIL SENDING ───────────────────────────────────────────────────
 app.post('/api/send-email', async (req, res) => {
   try {
     const { leadId, to, subject, body } = req.body;
-
-    const smtpHost = process.env.SMTP_HOST;
-    const smtpUser = process.env.SMTP_USER;
-    const smtpPass = process.env.SMTP_PASS;
-    const fromName = process.env.SMTP_FROM_NAME || smtpUser;
-    const fromEmail = process.env.SMTP_FROM_EMAIL || smtpUser;
-
-    if (!smtpHost || !smtpUser || !smtpPass) {
-      return res.status(400).json({ error: 'Configuration SMTP manquante dans .env (SMTP_HOST, SMTP_USER, SMTP_PASS)' });
-    }
+    const smtpHost = process.env.SMTP_HOST, smtpUser = process.env.SMTP_USER, smtpPass = process.env.SMTP_PASS;
+    if (!smtpHost || !smtpUser || !smtpPass) return res.status(400).json({ error: 'SMTP non configuré dans .env' });
 
     const transporter = nodemailer.createTransport({
-      host: smtpHost,
-      port: parseInt(process.env.SMTP_PORT || '587'),
+      host: smtpHost, port: parseInt(process.env.SMTP_PORT || '587'),
       secure: process.env.SMTP_SECURE === 'true',
       auth: { user: smtpUser, pass: smtpPass }
     });
-
-    await transporter.sendMail({
-      from: `"${fromName}" <${fromEmail}>`,
-      to,
-      subject,
-      text: body
-    });
-
-    if (leadId) {
-      db.prepare('UPDATE leads SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
-        .run('contacted', leadId);
-    }
-
+    await transporter.sendMail({ from: `"${process.env.SMTP_FROM_NAME || smtpUser}" <${process.env.SMTP_FROM_EMAIL || smtpUser}>`, to, subject, text: body });
+    if (leadId) db.updateLead(leadId, { status: 'contacted' });
     res.json({ success: true });
   } catch (err) {
     console.error('[send-email]', err.message);
@@ -404,20 +360,8 @@ app.post('/api/send-email', async (req, res) => {
 });
 
 // ─── ROUTES — SETTINGS ────────────────────────────────────────────────────────
-app.get('/api/settings', (req, res) => {
-  const rows = db.prepare('SELECT key, value FROM settings').all();
-  const out = {};
-  rows.forEach(r => out[r.key] = r.value);
-  res.json(out);
-});
-
-app.post('/api/settings', (req, res) => {
-  const entries = Object.entries(req.body);
-  const stmt = db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)');
-  const tx = db.transaction(() => entries.forEach(([k, v]) => stmt.run(k, v)));
-  tx();
-  res.json({ success: true });
-});
+app.get('/api/settings', (req, res) => res.json(db.getSettings()));
+app.post('/api/settings', (req, res) => { db.setSettings(req.body); res.json({ success: true }); });
 
 // ─── START ────────────────────────────────────────────────────────────────────
 app.listen(PORT, () => {
