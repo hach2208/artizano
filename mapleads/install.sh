@@ -30,7 +30,7 @@ if [ -d "$INSTALL_DIR" ]; then
   git pull 2>/dev/null || true
 else
   echo "📦 Clonage du projet..."
-  git clone https://github.com/hach2208/artizano.git "$HOME/artizano_tmp"
+  git clone -b claude/mapleads-reviews-analyzer-WvTMs https://github.com/hach2208/artizano.git "$HOME/artizano_tmp"
   mv "$HOME/artizano_tmp/mapleads" "$INSTALL_DIR"
   rm -rf "$HOME/artizano_tmp"
   cd "$INSTALL_DIR"
