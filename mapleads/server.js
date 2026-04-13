@@ -204,19 +204,29 @@ app.post('/api/analyze', async (req, res) => {
     if (details.status !== 'OK') return res.status(400).json({ error: `Google: ${details.status}`, detail: details.error_message });
 
     const place = details.result;
-    const reviews = (place.reviews || []).filter(r => r.text && r.text.length > 20);
+
+    // Filtre : uniquement les avis depuis le 1er janvier 2025
+    const since2025 = Math.floor(new Date('2025-01-01').getTime() / 1000);
+    const allReviews = (place.reviews || []).filter(r => r.text && r.text.length > 20);
+    const reviews = allReviews.filter(r => r.time && r.time >= since2025);
+    const skipped = allReviews.length - reviews.length;
+
     const address = place.formatted_address || '';
     const postal = extractPostalCode(address);
     const city = extractCity(address);
 
     if (reviews.length === 0) {
+      const msg = skipped > 0
+        ? `Aucun avis depuis janvier 2025 (${skipped} avis plus anciens ignorés)`
+        : 'Aucun avis disponible';
       db.insertOrReplaceLead({ place_id: place.place_id, name: place.name, address, city, postal_code: postal, phone: place.formatted_phone_number || '', website: place.website || '', rating: place.rating, total_ratings: place.user_ratings_total, pain_points: [] });
-      return res.json({ place: { ...place, postal_code: postal, city }, analysis: { painPoints: [], mainPain: 'Avis insuffisants', email: '', emailSubject: '' }, reviews: [] });
+      return res.json({ place: { ...place, postal_code: postal, city }, analysis: { painPoints: [], mainPain: msg, email: '', emailSubject: '' }, reviews: [] });
     }
 
-    const reviewsText = reviews.map((r, i) =>
-      `[Avis ${i + 1} — ${r.rating}★ — ${r.relative_time_description}]\n"${r.text}"`
-    ).join('\n\n');
+    const reviewsText = reviews.map((r, i) => {
+      const date = r.time ? new Date(r.time * 1000).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }) : r.relative_time_description;
+      return `[Avis ${i + 1} — ${r.rating}★ — ${date}]\n"${r.text}"`;
+    }).join('\n\n');
 
     const message = await anthropic.messages.create({
       model: 'claude-opus-4-6',
@@ -225,18 +235,18 @@ app.post('/api/analyze', async (req, res) => {
         role: 'user',
         content: `Tu es MapLeads AI, un expert en analyse de satisfaction client et prospection B2B.
 
-Voici les avis Google de l'entreprise "${place.name}" (${place.rating}/5 — ${place.user_ratings_total} avis au total) :
+Voici les avis Google RÉCENTS (janvier 2025 → aujourd'hui) de l'entreprise "${place.name}" (${place.rating}/5 — ${place.user_ratings_total} avis au total, ${reviews.length} avis récents analysés) :
 
 ${reviewsText}
 
 Mon offre : ${offer || '(offre non précisée)'}
 
 MISSION :
-1. Identifie les 3 à 5 douleurs les plus récurrentes et concrètes. Cite des phrases réelles des avis.
+1. Identifie les 3 à 5 douleurs les plus récurrentes et concrètes dans ces avis récents. Cite des phrases exactes.
 2. Croise chaque douleur avec mon offre.
 3. Rédige un cold email B2B en français, 130-150 mots, ton professionnel mais chaleureux.
    - Ne mentionne JAMAIS les avis Google ou que tu as "lu des avis"
-   - Adresse les douleurs de façon naturelle
+   - Adresse les douleurs de façon naturelle (comme si c'était une observation de terrain récente)
    - CTA clair : proposer un appel de 15 min
    - Termine par : "Si vous ne souhaitez plus recevoir d'emails, répondez simplement STOP."
 
